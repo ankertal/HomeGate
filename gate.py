@@ -110,7 +110,7 @@ def main():
     count = 1
     healthEntriesCounter = 0
     url = 'http://homegate.uaenorth.cloudapp.azure.com/status'
-    myobj = {'deployment': 'Tal'}
+    myobj = '{"deployment": "Tal"}'
 
     while True:
         gateOperationLock.acquire()
