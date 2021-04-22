@@ -107,16 +107,19 @@ def main():
           deployment + " @ " + now.strftime("%d/%m/%Y %H:%M:%S"), flush=True)
 
     # start loop
-    count = 1
     healthEntriesCounter = 0
     url = 'http://homegate.uaenorth.cloudapp.azure.com/status'
-    myobj = '{"deployment": "Tal"}'
+    getGateRCStatus = '{"deployment": "Tal"}'
 
     while True:
-        gateOperationLock.acquire()
-        x = requests.post(url, data = myobj)
+        print('before post\n', flush=True)
+        x = requests.post(url, data = getGateRCStatus)
+        print('After post\n', flush=True)
+        print('X: {0}\n'.format(x), flush=True)
         try:
             statusJson = json.load(x.text)
+            print('After post\n', flush=True)
+
             button = statusJson['status']
             log_screen('Deployment: {0}'.format(deployment))
             log_screen('Button Press: {0}'.format(button))
@@ -124,7 +127,6 @@ def main():
             transmit_signal(signal)
         except:
             pass
-        gateOperationLock.release()
         # Sleep a bit to avoid busy waiting
         time.sleep(0.5)
 
