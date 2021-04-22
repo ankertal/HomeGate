@@ -112,6 +112,9 @@ def main():
     healthEntriesCounter = 0
     url = 'http://homegate.uaenorth.cloudapp.azure.com/status'
     getGateRCStatus = '{"deployment": "Tal"}'
+    
+    x = requests.get('http://homegate.uaenorth.cloudapp.azure.com/')
+    log_screen('HomeGate Version: {0}'.format(x.text))
 
     while True:
          # Sleep a bit to avoid busy waiting

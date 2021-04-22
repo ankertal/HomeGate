@@ -10,6 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var version = "1.0"
+
 type OpenEvent struct {
 	Deployment *string `json:"deployment,omitempty"`
 	User       *string `json:"user,omitempty"`
@@ -45,7 +47,7 @@ func (srv *HomeGateServer) home(w http.ResponseWriter, r *http.Request) {
 
 	dumpRequest(w, r)
 
-	fmt.Fprintf(w, "Hello from HomeGate Server @ %v", time.Now())
+	fmt.Fprintf(w, "HomeGate Server @ %v, version: %v", time.Now(), version)
 }
 
 func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
