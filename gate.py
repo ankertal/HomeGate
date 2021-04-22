@@ -45,9 +45,9 @@ def log_screen(*args, **kwargs):
 Unknown = '0'
 Close = '1'
 Open = '2'
+Stop = '3'
 
 def select_signal(action):
-    print(action)
     return {
         Open: OPEN_TRANSMIT_SIGNAL,
         Stop: STOP_TRANSMIT_SIGNAL,
