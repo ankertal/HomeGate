@@ -3,10 +3,27 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
 )
+
+type DeploymentUser struct {
+	Name     *string `json:"name,omitempty"`
+	Password *string `json:"password,omitempty"`
+}
+
+type DeploymentConfig struct {
+	Name  *string          `json:"name,omitempty"`
+	Users []DeploymentUser `json:"users"`
+}
+
+type DeploymentsConfig struct {
+	Deployments []DeploymentConfig `json:"deployments"`
+}
 
 // ServerConfig contains required params
 type ServerConfig struct {
@@ -57,5 +74,35 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 		return nil
 	default:
 		return errors.New("invalid duration")
+	}
+}
+
+func (srv *HomeGateServer) setupDeployments() {
+	jsonFile, err := os.Open("/home/ankertal/Work/HomeGate/server/deployments.json")
+	if err != nil {
+		panic("Could not find a deployments file")
+	}
+
+	fmt.Println("Successfully Opened deployments.json")
+	defer jsonFile.Close()
+
+	// read our opened jsonFile as a byte array.
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	var configDeployments DeploymentsConfig
+	json.Unmarshal(byteValue, &configDeployments)
+
+	// we initialize our deployments 'button' states
+	for _, configDeployment := range configDeployments.Deployments {
+		var dep deployment
+		dep.name = configDeployment.Name
+		dep.rcState = Update
+		dep.users = make(map[string]*DeploymentUser)
+
+		for _, user := range configDeployment.Users {
+			username := user.Name
+			password := user.Password
+			dep.users[*username] = &DeploymentUser{Name: username, Password: password}
+		}
+		srv.deployments[*dep.name] = &dep
 	}
 }

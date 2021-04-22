@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"sync"
 
 	"github.com/gorilla/mux"
@@ -29,20 +27,6 @@ const (
 	Stop
 	Update
 )
-
-type DeploymentUser struct {
-	Name     *string `json:"name,omitempty"`
-	Password *string `json:"password,omitempty"`
-}
-
-type DeploymentConfig struct {
-	Name  *string          `json:"name,omitempty"`
-	Users []DeploymentUser `json:"users"`
-}
-
-type DeploymentsConfig struct {
-	Deployments []DeploymentConfig `json:"deployments"`
-}
 
 type deployment struct {
 	name    *string
@@ -107,34 +91,4 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(response)
-}
-
-func (srv *HomeGateServer) setupDeployments() {
-	jsonFile, err := os.Open("/home/ankertal/Work/HomeGate/server/deployments.json")
-	if err != nil {
-		panic("Could not find a deployments file")
-	}
-
-	fmt.Println("Successfully Opened deployments.json")
-	defer jsonFile.Close()
-
-	// read our opened jsonFile as a byte array.
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	var configDeployments DeploymentsConfig
-	json.Unmarshal(byteValue, &configDeployments)
-
-	// we initialize our deployments 'button' states
-	for _, configDeployment := range configDeployments.Deployments {
-		var dep deployment
-		dep.name = configDeployment.Name
-		dep.rcState = Update
-		dep.users = make(map[string]*DeploymentUser)
-
-		for _, user := range configDeployment.Users {
-			username := user.Name
-			password := user.Password
-			dep.users[*username] = &DeploymentUser{Name: username, Password: password}
-		}
-		srv.deployments[*dep.name] = &dep
-	}
 }
