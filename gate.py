@@ -120,7 +120,7 @@ def main():
             button = statusJson['status']
             log_screen('Deployment: {0}'.format(deployment))
             log_screen('Button Press: {0}'.format(button))
-            if button is Unknown:
+            if button == Unknown:
                 continue
             signal = select_signal(button)
             transmit_signal(signal)
