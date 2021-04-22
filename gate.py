@@ -121,9 +121,11 @@ def main():
             print('After post\n', flush=True)
 
             button = statusJson['status']
+            print('button: {0}\n'.format(button), flush=True)
+
             log_screen('Deployment: {0}'.format(deployment))
             log_screen('Button Press: {0}'.format(button))
-            signal = select_signal(triggerAction)
+            signal = select_signal(button)
             transmit_signal(signal)
         except:
             pass
