@@ -128,6 +128,7 @@ def main():
             if button == Unknown:
                 continue
             if button == Update: 
+                print('xxxxx')
                 sys.exit()
             signal = select_signal(button)
             print(signal)
