@@ -128,7 +128,8 @@ def main():
             signal = select_signal(button)
             transmit_signal(signal)
         except:
-            pass
+            print('exception\n', flush=True)
+
         # Sleep a bit to avoid busy waiting
         time.sleep(0.5)
 
