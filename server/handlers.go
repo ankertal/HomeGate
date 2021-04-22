@@ -23,8 +23,7 @@ type CloseEvent struct {
 }
 
 type StatusEvent struct {
-	Deployment *string `json:"deployment,omitempty"`
-	Password   *string `json:"password,omitempty"`
+	OpenEvent
 }
 
 func dumpRequest(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +49,32 @@ func (srv *HomeGateServer) home(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "HomeGate Server @ %v, version: %v", time.Now(), version)
 }
 
+func (srv *HomeGateServer) checkGateRequestParams(w http.ResponseWriter, deploymentName, userName, password *string) (*deployment, error) {
+	if deploymentName == nil || userName == nil || password == nil {
+		http.Error(w, "Bad Request / missing parameter !!!", http.StatusBadRequest)
+		return nil, fmt.Errorf("handler: Open called, missing parmeters")
+	}
+
+	deployment, ok := srv.deployments[*deploymentName]
+	if !ok {
+		http.Error(w, "Bad Request / deployment does not exist  !!!", http.StatusBadRequest)
+		return nil, fmt.Errorf("handler: unknown deployment: %v", *deploymentName)
+	} else {
+		user, ok := deployment.users[*userName]
+		if !ok {
+			http.Error(w, "Bad Request / user does not exist  !!!", http.StatusBadRequest)
+			return nil, fmt.Errorf("handler: deployment [ %v ], unknown user: %v", *deploymentName, userName)
+		}
+		if *user.Password != *password {
+			http.Error(w, "Bad Request / user/pass mismatch  !!!", http.StatusBadRequest)
+			return nil, fmt.Errorf("handler: deployment [ %v ], user: %v, password mismatch", *deploymentName, userName)
+		} else {
+			return deployment, nil
+		}
+	}
+
+}
+
 func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
@@ -64,7 +89,13 @@ func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request / data is not openEvent !!!", http.StatusBadRequest)
 		return
 	}
-	srv.deploymentRCState[*openEvent.Deployment] = Open
+
+	deployment, err := srv.checkGateRequestParams(w, openEvent.Deployment, openEvent.User, openEvent.Password)
+	if err != nil {
+		log.Printf("%v", err)
+		return
+	}
+	deployment.rcState = Open
 
 }
 
@@ -82,7 +113,13 @@ func (srv *HomeGateServer) close(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request / data is not closeEvent !!!", http.StatusBadRequest)
 		return
 	}
-	srv.deploymentRCState[*closeEvent.Deployment] = Open
+
+	deployment, err := srv.checkGateRequestParams(w, closeEvent.Deployment, closeEvent.User, closeEvent.Password)
+	if err != nil {
+		log.Printf("%v", err)
+		return
+	}
+	deployment.rcState = Open
 
 }
 
@@ -101,7 +138,12 @@ func (srv *HomeGateServer) rcStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if true {
-		respondWithJSON(w, http.StatusOK, map[string]string{"status": fmt.Sprintf("%v", srv.deploymentRCState[*statusEvent.Deployment])})
-		srv.deploymentRCState[*statusEvent.Deployment] = Unknown
+		deployment, err := srv.checkGateRequestParams(w, statusEvent.Deployment, statusEvent.User, statusEvent.Password)
+		if err != nil {
+			log.Printf("%v", err)
+			return
+		}
+		respondWithJSON(w, http.StatusOK, map[string]string{"status": fmt.Sprintf("%v", deployment.rcState)})
+		deployment.rcState = Unknown
 	}
 }

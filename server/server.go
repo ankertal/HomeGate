@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/gorilla/mux"
@@ -28,15 +30,35 @@ const (
 	Update
 )
 
+type DeploymentUser struct {
+	Name     *string `json:"name,omitempty"`
+	Password *string `json:"password,omitempty"`
+}
+
+type DeploymentConfig struct {
+	Name  *string          `json:"name,omitempty"`
+	Users []DeploymentUser `json:"users"`
+}
+
+type DeploymentsConfig struct {
+	Deployments []DeploymentConfig `json:"deployments"`
+}
+
+type deployment struct {
+	name    *string
+	users   map[string]*DeploymentUser
+	rcState KeyPressed
+}
+
 // HomeGateServer represents the webhook server
 type HomeGateServer struct {
 	config *ServerConfig
 	*http.Server
 	*mux.Router
 	*sync.Mutex
-	wg                *sync.WaitGroup
-	ShutdownChannel   chan struct{} // shutdown channel
-	deploymentRCState map[string]KeyPressed
+	wg              *sync.WaitGroup
+	ShutdownChannel chan struct{} // shutdown channel
+	deployments     map[string]*deployment
 }
 
 // NewServer creates a new webhook server
@@ -45,13 +67,13 @@ func NewServer(config *ServerConfig) *HomeGateServer {
 	r := mux.NewRouter()
 
 	srv := &HomeGateServer{
-		config:            config,
-		Server:            &http.Server{Addr: addr, Handler: r},
-		Router:            r,
-		Mutex:             &sync.Mutex{},
-		ShutdownChannel:   make(chan struct{}),
-		wg:                &sync.WaitGroup{},
-		deploymentRCState: make(map[string]KeyPressed),
+		config:          config,
+		Server:          &http.Server{Addr: addr, Handler: r},
+		Router:          r,
+		Mutex:           &sync.Mutex{},
+		ShutdownChannel: make(chan struct{}),
+		wg:              &sync.WaitGroup{},
+		deployments:     make(map[string]*deployment),
 	}
 
 	srv.setupDeployments()
@@ -88,7 +110,31 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func (srv *HomeGateServer) setupDeployments() {
-	for _, deployemnt := range srv.config.Deployments {
-		srv.deploymentRCState[deployemnt] = Update
+	jsonFile, err := os.Open("/home/ankertal/Work/HomeGate/server/deployments.json")
+	if err != nil {
+		panic("Could not find a deployments file")
+	}
+
+	fmt.Println("Successfully Opened deployments.json")
+	defer jsonFile.Close()
+
+	// read our opened jsonFile as a byte array.
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	var configDeployments DeploymentsConfig
+	json.Unmarshal(byteValue, &configDeployments)
+
+	// we initialize our deployments 'button' states
+	for _, configDeployment := range configDeployments.Deployments {
+		var dep deployment
+		dep.name = configDeployment.Name
+		dep.rcState = Update
+		dep.users = make(map[string]*DeploymentUser)
+
+		for _, user := range configDeployment.Users {
+			username := user.Name
+			password := user.Password
+			dep.users[*username] = &DeploymentUser{Name: username, Password: password}
+		}
+		srv.deployments[*dep.name] = &dep
 	}
 }
