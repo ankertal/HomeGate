@@ -47,9 +47,10 @@ Close = '1'
 Open = '2'
 
 def select_signal(action):
+    print('action:{0}\n'.format(action))')
     return {
         Open: OPEN_TRANSMIT_SIGNAL,
-        Close: STOP_TRANSMIT_SIGNAL,
+        Stop: STOP_TRANSMIT_SIGNAL,
         Close: CLOSE_TRANSMIT_SIGNAL
     }.get(action, OPEN_TRANSMIT_SIGNAL)
 
@@ -112,6 +113,8 @@ def main():
     getGateRCStatus = '{"deployment": "Tal"}'
 
     while True:
+         # Sleep a bit to avoid busy waiting
+        time.sleep(1)
         x = requests.post(url, data = getGateRCStatus)
         try:
             statusJson = json.loads(x.text)
@@ -125,8 +128,7 @@ def main():
         except:
             print('exception\n', flush=True)
 
-        # Sleep a bit to avoid busy waiting
-        time.sleep(1)
+       
 
 
 if __name__ == "__main__":
