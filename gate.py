@@ -112,26 +112,21 @@ def main():
     getGateRCStatus = '{"deployment": "Tal"}'
 
     while True:
-        print('before post\n', flush=True)
         x = requests.post(url, data = getGateRCStatus)
-        print('After post\n', flush=True)
-        print('X: {0}\n'.format(x.text), flush=True)
         try:
             statusJson = json.loads(x.text)
-            print('after load \n', flush=True)
-
             button = statusJson['status']
-            print('button: {0}\n'.format(button), flush=True)
-
             log_screen('Deployment: {0}'.format(deployment))
             log_screen('Button Press: {0}'.format(button))
+            if button is Unknown:
+                continue
             signal = select_signal(button)
             transmit_signal(signal)
         except:
             print('exception\n', flush=True)
 
         # Sleep a bit to avoid busy waiting
-        time.sleep(0.5)
+        time.sleep(1)
 
 
 if __name__ == "__main__":
