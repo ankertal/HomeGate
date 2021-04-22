@@ -24,6 +24,8 @@ const (
 	Unknown KeyPressed = iota
 	Close
 	Open
+	Stop
+	Update
 )
 
 // HomeGateServer represents the webhook server
@@ -87,6 +89,6 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 
 func (srv *HomeGateServer) setupDeployments() {
 	for _, deployemnt := range srv.config.Deployments {
-		srv.deploymentRCState[deployemnt] = Unknown
+		srv.deploymentRCState[deployemnt] = Update
 	}
 }

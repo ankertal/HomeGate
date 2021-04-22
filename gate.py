@@ -46,6 +46,7 @@ Unknown = '0'
 Close = '1'
 Open = '2'
 Stop = '3'
+Update = '4'
 
 def select_signal(action):
     return {
@@ -123,6 +124,8 @@ def main():
             log_screen('Button Press: {0}'.format(button))
             if button == Unknown:
                 continue
+            if button == Update: 
+                sys.exit()
             signal = select_signal(button)
             print(signal)
             transmit_signal(signal)
