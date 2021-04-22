@@ -5,21 +5,16 @@ import RPi.GPIO as GPIO
 import sys
 import os
 import threading
-from firebase import Firebase
 import json
 import time
 import threading
 import faulthandler
 import signal
+import requests
+
 
 gateOperationLock = threading.Lock()
 
-config = {
-    "apiKey": "AIzaSyDS7MuJRiiyBVfHzQl8hKH0WXvf8WCTs-I",
-    "authDomain": "homegate-24885.firebaseapp.com",
-    "databaseURL": "https://homegate-24885.firebaseio.com",
-    "storageBucket": "homegate-24885.appspot.com"
-}
 base_dir = "/home/pi/HomeGate"
 signals_dir = base_dir + "/signals/"
 
@@ -47,12 +42,15 @@ def log_screen(*args, **kwargs):
 # select_signal function takes an action string and return the correspinding signal to transmit. If no
 # match was found, then the default chosen signal is for the "open" action
 
+Unknown = '0'
+Close = '1'
+Open = '2'
 
 def select_signal(action):
     return {
-        'open': OPEN_TRANSMIT_SIGNAL,
-        'stop': STOP_TRANSMIT_SIGNAL,
-        'close': CLOSE_TRANSMIT_SIGNAL
+        Open: OPEN_TRANSMIT_SIGNAL,
+        Close: STOP_TRANSMIT_SIGNAL,
+        Close: CLOSE_TRANSMIT_SIGNAL
     }.get(action, OPEN_TRANSMIT_SIGNAL)
 
 
@@ -98,52 +96,12 @@ users['Yaron']['Tal'] = '024365645'
 users['Gilad']['Gilad'] = '12345678'
 users['Doron']['Doron'] = '12345678'
 
-
-def stream_handler(message):
-    global db
-    global db_error
-    global users
-    global gateOperationLock
-    gateOperationLock.acquire()
-
-    if message["event"] == "put":
-        if message["data"] != None:
-            gateTrigger = message["data"].get('gateTriggered')
-            print('Triggered', flush=True)
-            triggerUser = gateTrigger.get('user')
-            triggerPass = gateTrigger.get('pass')
-            triggerAction = gateTrigger.get('action')
-            try:
-                db.child(deployment).child("gateTriggers").child(
-                    "gateTriggered").remove()
-            except:
-                print('DB error, raising a flag\n', flush=True)
-                db_error = True
-
-            log_screen('User: {0}'.format(triggerUser))
-            log_screen('Pass: {0}'.format(triggerPass))
-            log_screen('Action: {0}'.format(triggerAction))
-
-            if triggerUser in users[deployment]:
-                if users[deployment][triggerUser] == triggerPass:
-                    log_screen("Found match\n")
-                    signal = select_signal(triggerAction)
-                    transmit_signal(signal)
-                else:
-                    log_screen("mismatch\n")
-    gateOperationLock.release()
-
-
 def main():
     # 1. read users from file and build dictionary {user:password}
     # 2. loop forever and read from db (see example)
 
-    global db
-    global db_error
     global gateOperationLock
-    my_stream = None
 
-    db_error = True
     now = datetime.now()
     print('Starting HomeGate Service for Deployment: ' +
           deployment + " @ " + now.strftime("%d/%m/%Y %H:%M:%S"), flush=True)
@@ -151,47 +109,24 @@ def main():
     # start loop
     count = 1
     healthEntriesCounter = 0
+    url = 'http://homegate.uaenorth.cloudapp.azure.com/status'
+    myobj = {'deployment': 'Tal'}
+
     while True:
         gateOperationLock.acquire()
-        if db_error == True:
-            print('No db connection, reconnecting...\n', flush=True)
-            firebase = Firebase(config)
-            db = firebase.database()
-            if db is not None:
-                print('reconnecting succeeded...\n', flush=True)
-                db_error = False
-                db.child(deployment).child("gateTriggers").child(
-                    "gateTriggered").remove()
-                try:
-                    my_stream.close()
-                except:
-                    pass
-                my_stream = db.child(deployment).child(
-                    "gateTriggers").stream(stream_handler)
-        if count == 0:
-            print('Performing health check\n', flush=True)
-            try:
-                data = {"check": "connection"}
-                if healthEntriesCounter == 50:
-                    db.child("healthChecks").child(deployment).remove()
-                    healthEntriesCounter = 0
-                else:
-                    db.child("healthChecks").child(deployment).set(data)
-                    healthEntriesCounter = healthEntriesCounter + 1
-                try:
-                    my_stream.close()
-                except:
-                    pass
-                my_stream = db.child(deployment).child(
-                    "gateTriggers").stream(stream_handler)
-            except:
-                db_error = True
+        x = requests.post(url, data = myobj)
+        try:
+            statusJson = json.load(x.text)
+            button = statusJson['status']
+            log_screen('Deployment: {0}'.format(deployment))
+            log_screen('Button Press: {0}'.format(button))
+            signal = select_signal(triggerAction)
+            transmit_signal(signal)
+        except:
+            pass
         gateOperationLock.release()
         # Sleep a bit to avoid busy waiting
-        time.sleep(1)
-        count = (count+1) % 50
-    print('Exiting main loop & closign db stream', flush=True)
-    my_stream.close()
+        time.sleep(0.5)
 
 
 if __name__ == "__main__":
