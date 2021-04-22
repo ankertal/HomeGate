@@ -123,6 +123,7 @@ def main():
             if button == Unknown:
                 continue
             signal = select_signal(button)
+            print(signal)
             transmit_signal(signal)
         except:
             print('exception\n', flush=True)
