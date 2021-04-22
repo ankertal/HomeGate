@@ -115,7 +115,7 @@ def main():
         print('before post\n', flush=True)
         x = requests.post(url, data = getGateRCStatus)
         print('After post\n', flush=True)
-        print('X: {0}\n'.format(x), flush=True)
+        print('X: {0}\n'.format(x.text), flush=True)
         try:
             statusJson = json.load(x.text)
             print('After post\n', flush=True)
