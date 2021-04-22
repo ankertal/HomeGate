@@ -118,7 +118,7 @@ def main():
         print('X: {0}\n'.format(x.text), flush=True)
         try:
             statusJson = json.load(x.text)
-            print('After post\n', flush=True)
+            print('after load \n', flush=True)
 
             button = statusJson['status']
             print('button: {0}\n'.format(button), flush=True)
