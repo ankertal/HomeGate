@@ -47,6 +47,7 @@ Close = '1'
 Open = '2'
 
 def select_signal(action):
+    print(action)
     return {
         Open: OPEN_TRANSMIT_SIGNAL,
         Stop: STOP_TRANSMIT_SIGNAL,
