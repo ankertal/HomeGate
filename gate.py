@@ -129,7 +129,7 @@ def main():
                 continue
             if button == Update: 
                 print('xxxxx')
-                sys.exit()
+                return
             signal = select_signal(button)
             print(signal)
             transmit_signal(signal)
