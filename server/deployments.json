@@ -52,6 +52,10 @@
                 {
                     "Name": "Tal",
                     "Password": "024365645"
+                },
+                {
+                    "Name": "gate",
+                    "Password": "12345678"
                 }
             ]
         }

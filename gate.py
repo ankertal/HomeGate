@@ -106,7 +106,7 @@ def main():
     # start loop
     healthEntriesCounter = 0
     url = 'http://weinsgate.uaenorth.cloudapp.azure.com/status'
-    getGateRCStatus = '{"deployment": "Yaron", "user": "Yaron", "password": "029607017"}'
+    getGateRCStatus = '{"deployment": "Yaron", "user": "gate", "password": "12345678"}'
 
     x = requests.get('http://weinsgate.uaenorth.cloudapp.azure.com/')
     log_screen('{0}'.format(x.text))
