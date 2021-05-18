@@ -4,7 +4,7 @@ then
   echo "Gate app is running."
 else
   echo "Gate app is not running... Starting it now"
-  cd /home/pi/HomeGate/
+  cd /home/pi/work/HomeGate
   git pull
-  /home/pi/HomeGate/gate.py >> /tmp/gate.log  2>&1 &
+  /home/pi/work/HomeGate/gate.py >> /tmp/gate.log  2>&1 &
 fi
