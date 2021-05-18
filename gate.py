@@ -13,8 +13,6 @@ import signal
 import requests
 
 
-gateOperationLock = threading.Lock()
-
 base_dir = "/home/pi/work/HomeGate"
 signals_dir = base_dir + "/signals/"
 
@@ -100,8 +98,6 @@ users['Yaron']['Tal'] = '024365645'
 def main():
     # 1. read users from file and build dictionary {user:password}
     # 2. loop forever and read from db (see example)
-
-    global gateOperationLock
 
     now = datetime.now()
     print('Starting HomeGate Service for Deployment: ' +
