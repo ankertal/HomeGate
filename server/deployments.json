@@ -1,40 +1,6 @@
 {
     "deployments": [
         {
-            "Name": "Tal",
-            "Users": [
-                {
-                    "Name": "tal",
-                    "Password": "024365645"
-                },
-                {
-                    "Name": "dorit",
-                    "Password": "028014405"
-                },
-                {
-                    "Name": "gate",
-                    "Password": "12345678"
-                }
-            ]
-        },
-        {
-            "Name": "Gilad",
-            "Users": [
-                {
-                    "Name": "gilad",
-                    "Password": "12345678"
-                },
-                {
-                    "Name": "maoz",
-                    "Password": "12345678"
-                },
-                {
-                    "Name": "gate",
-                    "Password": "12345678"
-                }
-            ]
-        },
-        {
             "Name": "Yaron",
             "Users": [
                 {

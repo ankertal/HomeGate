@@ -58,6 +58,7 @@ def select_signal(action):
 def read_signal(signal_file, signal):
     try:
         with open(signal_file, "r") as s:
+            print('===> signal file: ' + signal_file)
             for line in s:
                 fields = line.split()
                 signal_value = int(fields[1])
@@ -88,12 +89,6 @@ def transmit_signal(signal):
     GPIO.cleanup()
     log_screen("Transmission done")
 
-
-users = {'Tal': {},  'Yaron': {}, 'Keren': {}, 'Yuval': {}}
-users['Yaron']['Yaron'] = '029607017'
-users['Yaron']['Keren'] = '029607017'
-users['Yaron']['Yuval'] = '029607017'
-users['Yaron']['Tal'] = '024365645'
 
 def main():
     # 1. read users from file and build dictionary {user:password}
