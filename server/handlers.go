@@ -119,7 +119,7 @@ func (srv *HomeGateServer) close(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%v", err)
 		return
 	}
-	deployment.rcState = Open
+	deployment.rcState = Close
 
 }
 

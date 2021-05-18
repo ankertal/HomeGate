@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/bin/python3
 from datetime import datetime
 from datetime import timedelta
 import RPi.GPIO as GPIO
@@ -106,7 +106,7 @@ def main():
     # start loop
     healthEntriesCounter = 0
     url = 'http://weinsgate.uaenorth.cloudapp.azure.com/status'
-    getGateRCStatus = '{"deployment": "Tal", "user": "gate", "password": "12345678"}'
+    getGateRCStatus = '{"deployment": "Yaron", "user": "Yaron", "password": "029607017"}'
 
     x = requests.get('http://weinsgate.uaenorth.cloudapp.azure.com/')
     log_screen('{0}'.format(x.text))
