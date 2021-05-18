@@ -91,12 +91,11 @@ def transmit_signal(signal):
     log_screen("Transmission done")
 
 
-users = {'Tal': {}, 'Gilad': {}, 'Yaron': {}, 'Doron': {}}
-users['Tal']['Tal'] = '024365645'
-users['Tal']['Dorit'] = '028014405'
+users = {'Tal': {},  'Yaron': {}, 'Keren': {}, 'Yuval': {}}
+users['Yaron']['Yaron'] = '029607017'
+users['Yaron']['Keren'] = '029607017'
+users['Yaron']['Yuval'] = '029607017'
 users['Yaron']['Tal'] = '024365645'
-users['Gilad']['Gilad'] = '12345678'
-users['Doron']['Doron'] = '12345678'
 
 def main():
     # 1. read users from file and build dictionary {user:password}
