@@ -8,12 +8,11 @@ import (
 	"sync"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
 func init() {
-	customFormatter := new(logrus.TextFormatter)
+	customFormatter := new(log.TextFormatter)
 	customFormatter.FullTimestamp = true
 	log.SetFormatter(customFormatter)
 }
