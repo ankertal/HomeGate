@@ -7,7 +7,7 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-ExecStart=/home/ankertal/Work/HomeGate/cmd/gate/homegate/homegate
+ExecStart=/home/wyaron/work/HomeGate/cmd/gate/homegate/homegate
 
 [Install]
 WantedBy=multi-user.target

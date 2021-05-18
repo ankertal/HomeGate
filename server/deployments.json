@@ -38,16 +38,20 @@
             "Name": "Yaron",
             "Users": [
                 {
-                    "Name": "yaron",
-                    "Password": "12345678"
+                    "Name": "Yaron",
+                    "Password": "029607017"
                 },
                 {
-                    "Name": "keren",
-                    "Password": "12345678"
+                    "Name": "Keren",
+                    "Password": "029607017"
                 },
                 {
-                    "Name": "gate",
-                    "Password": "12345678"
+                    "Name": "Yuval",
+                    "Password": "029607017"
+                },
+                {
+                    "Name": "Tal",
+                    "Password": "024365645"
                 }
             ]
         }

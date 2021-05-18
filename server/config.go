@@ -78,7 +78,7 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 }
 
 func (srv *HomeGateServer) setupDeployments() {
-	jsonFile, err := os.Open("/home/ankertal/Work/HomeGate/server/deployments.json")
+	jsonFile, err := os.Open("/home/wyaron/work/HomeGate/server/deployments.json")
 	if err != nil {
 		panic("Could not find a deployments file")
 	}
