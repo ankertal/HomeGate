@@ -15,10 +15,10 @@ import requests
 
 gateOperationLock = threading.Lock()
 
-base_dir = "/home/pi/HomeGate"
+base_dir = "/home/pi/work/HomeGate"
 signals_dir = base_dir + "/signals/"
 
-deployment = "Tal"
+deployment = "Yaron"
 
 OPEN_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
 STOP_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
@@ -110,10 +110,10 @@ def main():
 
     # start loop
     healthEntriesCounter = 0
-    url = 'http://homegate.uaenorth.cloudapp.azure.com/status'
+    url = 'http://weinsgate.uaenorth.cloudapp.azure.com/status'
     getGateRCStatus = '{"deployment": "Tal", "user": "gate", "password": "12345678"}'
 
-    x = requests.get('http://homegate.uaenorth.cloudapp.azure.com/')
+    x = requests.get('http://weinsgate.uaenorth.cloudapp.azure.com/')
     log_screen('{0}'.format(x.text))
 
     while True:
