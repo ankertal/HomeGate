@@ -137,13 +137,14 @@ func (srv *HomeGateServer) rcStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request / data is not StatusEvent !!!", http.StatusBadRequest)
 		return
 	}
-	if true {
-		deployment, err := srv.checkGateRequestParams(w, statusEvent.Deployment, statusEvent.User, statusEvent.Password)
-		if err != nil {
-			log.Printf("%v", err)
-			return
-		}
-		respondWithJSON(w, http.StatusOK, map[string]string{"status": fmt.Sprintf("%v", deployment.rcState)})
-		deployment.rcState = Unknown
+
+	deployment, err := srv.checkGateRequestParams(w, statusEvent.Deployment, statusEvent.User, statusEvent.Password)
+	if err != nil {
+		log.Printf("%v", err)
+		return
 	}
+
+	respondWithJSON(w, http.StatusOK, map[string]string{"status": fmt.Sprintf("%v", deployment.rcState)})
+
+	deployment.rcState = Unknown
 }
