@@ -23,7 +23,7 @@ STOP_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
 CLOSE_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
 
 
-NUM_ATTEMPTS = 5
+NUM_ATTEMPTS = 20
 TRANSMIT_PIN = 23
 
 
@@ -78,14 +78,14 @@ def transmit_signal(signal):
     '''Transmit a signal stream using the GPIO transmitter'''
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(TRANSMIT_PIN, GPIO.OUT)
-    log_screen("Transmitting gate signal, length: " +
-               str(len(signal[0])))
+    log_screen("Transmitting gate signal, length: " + str(len(signal[0])) + " times = " + str(NUM_ATTEMPTS))
     for t in range(NUM_ATTEMPTS):
         for i in range(len(signal[0])):
             # print("going to transmit % d and to sleep %f secs" %
             #      (TRANSMIT_SIGNAL[1][i], TRANSMIT_SIGNAL[0][i]))
             GPIO.output(TRANSMIT_PIN, signal[1][i])
             time.sleep(signal[0][i])
+        time.sleep(0.5)
     GPIO.cleanup()
     log_screen("Transmission done")
 
@@ -101,14 +101,14 @@ def main():
     # start loop
     healthEntriesCounter = 0
     url = 'http://weinsgate.uaenorth.cloudapp.azure.com/status'
-    getGateRCStatus = '{"deployment": "Yaron", "user": "gate", "password": "12345678"}'
+    getGateRCStatus = '{"deployment": "Yaron", "user": "gate", "password": "homegate;415231"}'
 
     x = requests.get('http://weinsgate.uaenorth.cloudapp.azure.com/')
     log_screen('{0}'.format(x.text))
 
     while True:
          # Sleep a bit to avoid busy waiting
-        time.sleep(1)
+        time.sleep(2)
         x = requests.post(url, data = getGateRCStatus)
         try:
             statusJson = json.loads(x.text)
