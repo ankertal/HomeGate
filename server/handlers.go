@@ -45,7 +45,7 @@ func (srv *HomeGateServer) home(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	dumpRequest(w, r)
+	//dumpRequest(w, r)
 
 	fmt.Fprintf(w, "HomeGate Server @ %v, version: %v\n", time.Now(), version)
 }
@@ -54,7 +54,7 @@ func (srv *HomeGateServer) times(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	dumpRequest(w, r)
+	//dumpRequest(w, r)
 
 	params := mux.Vars(r)
 	deploymentName := params["deployment"]
@@ -95,7 +95,7 @@ func (srv *HomeGateServer) checkGateRequestParams(w http.ResponseWriter, deploym
 }
 
 func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
-	dumpRequest(w, r)
+	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var openEvent OpenEvent
@@ -117,10 +117,12 @@ func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
 	deployment.rcState = Open
 	deployment.lastOpen = time.Now()
 
+	//fmt.Fprintf(w, "%v gate request to OPEN @ %v\n", *deployment.name, time.Now())
+	fmt.Fprintf(w, "%v's gate requested to OPEN Acknowledged!\n", *deployment.name)
 }
 
 func (srv *HomeGateServer) close(w http.ResponseWriter, r *http.Request) {
-	dumpRequest(w, r)
+	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var closeEvent CloseEvent
@@ -142,11 +144,12 @@ func (srv *HomeGateServer) close(w http.ResponseWriter, r *http.Request) {
 
 	deployment.rcState = Close
 	deployment.lastClose = time.Now()
-
+	//fmt.Fprintf(w, "%v gate request to CLOSE @ %v\n", *deployment.name, time.Now())
+	fmt.Fprintf(w, "%v's gate requested to CLOSE Acknowledged!\n", *deployment.name)
 }
 
 func (srv *HomeGateServer) rcStatus(w http.ResponseWriter, r *http.Request) {
-	dumpRequest(w, r)
+	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var statusEvent StatusEvent
