@@ -1,8 +1,7 @@
 #!/usr/local/bin/python3
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), 'learn'))
-
-import learn
+import learn_utils
 
 from datetime import datetime
 from datetime import timedelta
@@ -165,7 +164,7 @@ def main():
 
 
 if __name__ == "__main__":
-    learn.test()
+    learn_utils.test()
 
     open_signal_file = signals_dir + deployment + "-open.txt"
     stop_signal_file = signals_dir + deployment + "-stop.txt"
