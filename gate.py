@@ -47,6 +47,9 @@ Close = '1'
 Open = '2'
 Stop = '3'
 Update = '4'
+LearnOpen = '5'
+LearnClose = '6'
+
 
 def select_signal(action):
     return {
@@ -98,6 +101,17 @@ users['Yaron']['Tal'] = '024365645'
 users['Gilad']['Gilad'] = '12345678'
 users['Doron']['Doron'] = '12345678'
 
+def learn_open():
+    print('learn to open pressed: ' +
+          deployment + " @ " + now.strftime("%d/%m/%Y %H:%M:%S"), flush=True)
+    
+
+
+def learn_close():
+    print('learn to close pressed: ' +
+          deployment + " @ " + now.strftime("%d/%m/%Y %H:%M:%S"), flush=True)
+    
+
 def main():
     # 1. read users from file and build dictionary {user:password}
     # 2. loop forever and read from db (see example)
@@ -129,6 +143,13 @@ def main():
                 continue
             if button == Update: 
                 return
+            if button == LearnOpen:
+                learn_open()
+                continue
+            if button == LearnClose:
+                learn_close()
+                continue
+            # Its either a request to close/open the gate
             signal = select_signal(button)
             print(signal)
             transmit_signal(signal)

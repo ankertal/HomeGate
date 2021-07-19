@@ -26,6 +26,8 @@ const (
 	Open
 	Stop
 	Update
+	LearnOpen
+	LearnClose
 )
 
 type deployment struct {
@@ -82,6 +84,8 @@ func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 	srv.Router.HandleFunc("/times/{deployment}", srv.times).Methods("GET")
 	srv.Router.HandleFunc("/open", srv.open).Methods("POST")
 	srv.Router.HandleFunc("/close", srv.close).Methods("POST")
+	srv.Router.HandleFunc("/learn-open", srv.learnOpen).Methods("POST")
+	srv.Router.HandleFunc("/learn-close", srv.learnClose).Methods("POST")
 	srv.Router.HandleFunc("/status", srv.rcStatus).Methods("POST")
 }
 

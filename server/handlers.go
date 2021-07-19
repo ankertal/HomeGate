@@ -13,18 +13,22 @@ import (
 
 var version = "1.0"
 
-type OpenEvent struct {
+type GateEvent struct {
 	Deployment *string `json:"deployment,omitempty"`
 	User       *string `json:"user,omitempty"`
 	Password   *string `json:"password,omitempty"`
 }
 
 type CloseEvent struct {
-	OpenEvent
+	GateEvent
 }
 
 type StatusEvent struct {
-	OpenEvent
+	GateEvent
+}
+
+type LearnEvent struct {
+	GateEvent
 }
 
 func dumpRequest(w http.ResponseWriter, r *http.Request) {
@@ -98,7 +102,7 @@ func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
 	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
-	var openEvent OpenEvent
+	var openEvent GateEvent
 	err := json.NewDecoder(r.Body).Decode(&openEvent)
 	if err != nil {
 		log.Printf("handler: failed to decode the openEvent message: %v", err.Error())
@@ -174,4 +178,56 @@ func (srv *HomeGateServer) rcStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deployment.rcState = Unknown
+}
+
+func (srv *HomeGateServer) learnOpen(w http.ResponseWriter, r *http.Request) {
+	//dumpRequest(w, r)
+
+	w.Header().Set("Content-Type", "application/json")
+	var learnEvent LearnEvent
+	err := json.NewDecoder(r.Body).Decode(&learnEvent)
+	if err != nil {
+		log.Printf("handler: failed to decode the learnEvent message: %v", err.Error())
+		http.Error(w, "Bad Request / data is not learnEvent !!!", http.StatusBadRequest)
+		return
+	}
+
+	srv.Lock()
+	defer srv.Unlock()
+
+	deployment, err := srv.checkGateRequestParams(w, learnEvent.Deployment, learnEvent.User, learnEvent.Password)
+	if err != nil {
+		log.Printf("%v", err)
+		return
+	}
+
+	deployment.rcState = LearnOpen
+
+	fmt.Fprintf(w, "%v's gate requested to LEARN Open button -  Acknowledged!\n", *deployment.name)
+}
+
+func (srv *HomeGateServer) learnClose(w http.ResponseWriter, r *http.Request) {
+	//dumpRequest(w, r)
+
+	w.Header().Set("Content-Type", "application/json")
+	var learnEvent LearnEvent
+	err := json.NewDecoder(r.Body).Decode(&learnEvent)
+	if err != nil {
+		log.Printf("handler: failed to decode the learnEvent message: %v", err.Error())
+		http.Error(w, "Bad Request / data is not learnEvent !!!", http.StatusBadRequest)
+		return
+	}
+
+	srv.Lock()
+	defer srv.Unlock()
+
+	deployment, err := srv.checkGateRequestParams(w, learnEvent.Deployment, learnEvent.User, learnEvent.Password)
+	if err != nil {
+		log.Printf("%v", err)
+		return
+	}
+
+	deployment.rcState = LearnClose
+
+	fmt.Fprintf(w, "%v's gate requested to LEARN Close button -  Acknowledged!\n", *deployment.name)
 }
