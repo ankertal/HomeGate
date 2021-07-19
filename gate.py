@@ -1,9 +1,12 @@
 #!/usr/local/bin/python3
+import os, sys
+sys.path.append(os.path.join(os.path.dirname(_file_), 'learn'))
+
+import learn
+
 from datetime import datetime
 from datetime import timedelta
 import RPi.GPIO as GPIO
-import sys
-import os
 import threading
 import json
 import time
@@ -102,12 +105,14 @@ users['Gilad']['Gilad'] = '12345678'
 users['Doron']['Doron'] = '12345678'
 
 def learn_open():
+    now = datetime.now()
     print('learn to open pressed: ' +
           deployment + " @ " + now.strftime("%d/%m/%Y %H:%M:%S"), flush=True)
     
 
 
 def learn_close():
+    now = datetime.now()
     print('learn to close pressed: ' +
           deployment + " @ " + now.strftime("%d/%m/%Y %H:%M:%S"), flush=True)
     
@@ -160,6 +165,8 @@ def main():
 
 
 if __name__ == "__main__":
+    learn.test()
+
     open_signal_file = signals_dir + deployment + "-open.txt"
     stop_signal_file = signals_dir + deployment + "-stop.txt"
     close_signal_file = signals_dir + deployment + "-close.txt"
