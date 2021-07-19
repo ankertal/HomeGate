@@ -1,4 +1,7 @@
 #!/bin/bash
+if test -f "/tmp/gate-suspend.txt"; then
+    exit
+fi
 if pgrep gate >/dev/null
 then
   echo "Gate app is running."
