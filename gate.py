@@ -2,7 +2,7 @@
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), 'learn'))
 
-import learn
+import learn.learn
 
 from datetime import datetime
 from datetime import timedelta
