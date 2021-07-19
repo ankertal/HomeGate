@@ -7,6 +7,7 @@ import (
 	"net/http/httputil"
 	"time"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -44,9 +45,27 @@ func (srv *HomeGateServer) home(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	dumpRequest(w, r)
+	//dumpRequest(w, r)
 
-	fmt.Fprintf(w, "HomeGate Server @ %v, version: %v", time.Now(), version)
+	fmt.Fprintf(w, "HomeGate Server @ %v, version: %v\n", time.Now(), version)
+}
+
+func (srv *HomeGateServer) times(w http.ResponseWriter, r *http.Request) {
+	srv.Lock()
+	defer srv.Unlock()
+
+	//dumpRequest(w, r)
+
+	params := mux.Vars(r)
+	deploymentName := params["deployment"]
+	dep, ok := srv.deployments[deploymentName]
+	if ok {
+		fmt.Fprintf(w, "Last Open for Deployment : %v --> %v\n", deploymentName, dep.lastOpen)
+		fmt.Fprintf(w, "Last Close for Deployment: %v --> %v\n", deploymentName, dep.lastClose)
+		fmt.Fprintf(w, "Last Got Command for RC  : %v --> %v\n", deploymentName, dep.lastGotCommand)
+	} else {
+		fmt.Fprintf(w, "Could not find a deployment: %v", deploymentName)
+	}
 }
 
 func (srv *HomeGateServer) checkGateRequestParams(w http.ResponseWriter, deploymentName, userName, password *string) (*deployment, error) {
@@ -76,10 +95,7 @@ func (srv *HomeGateServer) checkGateRequestParams(w http.ResponseWriter, deploym
 }
 
 func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
-	srv.Lock()
-	defer srv.Unlock()
-
-	dumpRequest(w, r)
+	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var openEvent OpenEvent
@@ -90,20 +106,22 @@ func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	srv.Lock()
+	defer srv.Unlock()
+
 	deployment, err := srv.checkGateRequestParams(w, openEvent.Deployment, openEvent.User, openEvent.Password)
 	if err != nil {
 		log.Printf("%v", err)
 		return
 	}
 	deployment.rcState = Open
+	deployment.lastOpen = time.Now()
 
+	fmt.Fprintf(w, "%v's gate requested to OPEN Acknowledged!\n", *deployment.name)
 }
 
 func (srv *HomeGateServer) close(w http.ResponseWriter, r *http.Request) {
-	srv.Lock()
-	defer srv.Unlock()
-
-	dumpRequest(w, r)
+	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var closeEvent CloseEvent
@@ -114,20 +132,22 @@ func (srv *HomeGateServer) close(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	srv.Lock()
+	defer srv.Unlock()
+
 	deployment, err := srv.checkGateRequestParams(w, closeEvent.Deployment, closeEvent.User, closeEvent.Password)
 	if err != nil {
 		log.Printf("%v", err)
 		return
 	}
-	deployment.rcState = Close
 
+	deployment.rcState = Close
+	deployment.lastClose = time.Now()
+	fmt.Fprintf(w, "%v's gate requested to CLOSE Acknowledged!\n", *deployment.name)
 }
 
 func (srv *HomeGateServer) rcStatus(w http.ResponseWriter, r *http.Request) {
-	srv.Lock()
-	defer srv.Unlock()
-
-	dumpRequest(w, r)
+	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var statusEvent StatusEvent
@@ -137,13 +157,21 @@ func (srv *HomeGateServer) rcStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad Request / data is not StatusEvent !!!", http.StatusBadRequest)
 		return
 	}
-	if true {
-		deployment, err := srv.checkGateRequestParams(w, statusEvent.Deployment, statusEvent.User, statusEvent.Password)
-		if err != nil {
-			log.Printf("%v", err)
-			return
-		}
-		respondWithJSON(w, http.StatusOK, map[string]string{"status": fmt.Sprintf("%v", deployment.rcState)})
-		deployment.rcState = Unknown
+
+	srv.Lock()
+	defer srv.Unlock()
+
+	deployment, err := srv.checkGateRequestParams(w, statusEvent.Deployment, statusEvent.User, statusEvent.Password)
+	if err != nil {
+		log.Printf("%v", err)
+		return
 	}
+
+	respondWithJSON(w, http.StatusOK, map[string]string{"status": fmt.Sprintf("%v", deployment.rcState)})
+
+	if deployment.rcState == Open || deployment.rcState == Close || deployment.rcState == Update {
+		deployment.lastGotCommand = time.Now()
+	}
+
+	deployment.rcState = Unknown
 }

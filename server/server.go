@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -28,9 +29,12 @@ const (
 )
 
 type deployment struct {
-	name    *string
-	users   map[string]*DeploymentUser
-	rcState KeyPressed
+	name           *string
+	users          map[string]*DeploymentUser
+	rcState        KeyPressed
+	lastOpen       time.Time
+	lastClose      time.Time
+	lastGotCommand time.Time
 }
 
 // HomeGateServer represents the webhook server
@@ -75,6 +79,7 @@ func (srv *HomeGateServer) Shutdown() {
 
 func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 	srv.Router.HandleFunc("/", srv.home).Methods("GET")
+	srv.Router.HandleFunc("/times/{deployment}", srv.times).Methods("GET")
 	srv.Router.HandleFunc("/open", srv.open).Methods("POST")
 	srv.Router.HandleFunc("/close", srv.close).Methods("POST")
 	srv.Router.HandleFunc("/status", srv.rcStatus).Methods("POST")
