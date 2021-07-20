@@ -140,6 +140,9 @@ def learn_open():
     print('learn to open pressed: ' +
           deployment + " @ " + now.strftime("%d/%m/%Y %H:%M:%S"), flush=True)
     signal_file_name = "/tmp/" + deployment + "-open.txt"
+
+    print("before record", flush=True)
+
     record_signal(signal_file_name)
     read_signal(signal_file_name, CANDIDATE_OPEN_TRANSMIT_SIGNAL)
 

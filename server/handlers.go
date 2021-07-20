@@ -31,6 +31,14 @@ type LearnEvent struct {
 	GateEvent
 }
 
+type TestEvent struct {
+	GateEvent
+}
+
+type SetEvent struct {
+	GateEvent
+}
+
 func dumpRequest(w http.ResponseWriter, r *http.Request) {
 	log.Printf("handler: inside hooksHandler")
 	var err error
@@ -230,4 +238,108 @@ func (srv *HomeGateServer) learnClose(w http.ResponseWriter, r *http.Request) {
 	deployment.rcState = LearnClose
 
 	fmt.Fprintf(w, "%v's gate requested to LEARN Close button -  Acknowledged!\n", *deployment.name)
+}
+
+func (srv *HomeGateServer) testOpen(w http.ResponseWriter, r *http.Request) {
+	//dumpRequest(w, r)
+
+	w.Header().Set("Content-Type", "application/json")
+	var testEvent TestEvent
+	err := json.NewDecoder(r.Body).Decode(&testEvent)
+	if err != nil {
+		log.Printf("handler: failed to decode the testEvent message: %v", err.Error())
+		http.Error(w, "Bad Request / data is not testEvent !!!", http.StatusBadRequest)
+		return
+	}
+
+	srv.Lock()
+	defer srv.Unlock()
+
+	deployment, err := srv.checkGateRequestParams(w, testEvent.Deployment, testEvent.User, testEvent.Password)
+	if err != nil {
+		log.Printf("%v", err)
+		return
+	}
+
+	deployment.rcState = TestOpen
+
+	fmt.Fprintf(w, "%v's gate requested to Test New Open button -  Acknowledged!\n", *deployment.name)
+}
+
+func (srv *HomeGateServer) testClose(w http.ResponseWriter, r *http.Request) {
+	//dumpRequest(w, r)
+
+	w.Header().Set("Content-Type", "application/json")
+	var testEvent TestEvent
+	err := json.NewDecoder(r.Body).Decode(&testEvent)
+	if err != nil {
+		log.Printf("handler: failed to decode the testEvent message: %v", err.Error())
+		http.Error(w, "Bad Request / data is not testEvent !!!", http.StatusBadRequest)
+		return
+	}
+
+	srv.Lock()
+	defer srv.Unlock()
+
+	deployment, err := srv.checkGateRequestParams(w, testEvent.Deployment, testEvent.User, testEvent.Password)
+	if err != nil {
+		log.Printf("%v", err)
+		return
+	}
+
+	deployment.rcState = TestClose
+
+	fmt.Fprintf(w, "%v's gate requested to Test New Close button -  Acknowledged!\n", *deployment.name)
+}
+
+func (srv *HomeGateServer) setOpen(w http.ResponseWriter, r *http.Request) {
+	//dumpRequest(w, r)
+
+	w.Header().Set("Content-Type", "application/json")
+	var setEvent SetEvent
+	err := json.NewDecoder(r.Body).Decode(&setEvent)
+	if err != nil {
+		log.Printf("handler: failed to decode the setEvent message: %v", err.Error())
+		http.Error(w, "Bad Request / data is not testEvent !!!", http.StatusBadRequest)
+		return
+	}
+
+	srv.Lock()
+	defer srv.Unlock()
+
+	deployment, err := srv.checkGateRequestParams(w, setEvent.Deployment, setEvent.User, setEvent.Password)
+	if err != nil {
+		log.Printf("%v", err)
+		return
+	}
+
+	deployment.rcState = SetOpen
+
+	fmt.Fprintf(w, "%v's gate requested to set Open button -  Acknowledged!\n", *deployment.name)
+}
+
+func (srv *HomeGateServer) setClose(w http.ResponseWriter, r *http.Request) {
+	//dumpRequest(w, r)
+
+	w.Header().Set("Content-Type", "application/json")
+	var setEvent SetEvent
+	err := json.NewDecoder(r.Body).Decode(&setEvent)
+	if err != nil {
+		log.Printf("handler: failed to decode the setEvent message: %v", err.Error())
+		http.Error(w, "Bad Request / data is not testEvent !!!", http.StatusBadRequest)
+		return
+	}
+
+	srv.Lock()
+	defer srv.Unlock()
+
+	deployment, err := srv.checkGateRequestParams(w, setEvent.Deployment, setEvent.User, setEvent.Password)
+	if err != nil {
+		log.Printf("%v", err)
+		return
+	}
+
+	deployment.rcState = SetClose
+
+	fmt.Fprintf(w, "%v's gate requested to set Close button -  Acknowledged!\n", *deployment.name)
 }

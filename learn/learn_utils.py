@@ -104,8 +104,11 @@ def test():
     print("learn test", flush=True)
 
 def record_signal(signal_file_name):
+    print("record_signal", flush=True)
     record_signal()
+    print("extracting burst", flush=True)
     extract_signal_bursts()
+    print("extract button", flush=True)
     extract_button_press(signal_file_name)
 
 if __name__ == '__main__':
