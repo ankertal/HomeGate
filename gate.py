@@ -143,7 +143,7 @@ def learn_open():
 
     print("before record", flush=True)
 
-    record_signal(signal_file_name)
+    learn_utils.record_signal(signal_file_name)
     read_signal(signal_file_name, CANDIDATE_OPEN_TRANSMIT_SIGNAL)
 
 
@@ -153,7 +153,7 @@ def learn_close():
           deployment + " @ " + now.strftime("%d/%m/%Y %H:%M:%S"), flush=True)
 
     signal_file_name = "/tmp/" + deployment + "-close.txt"
-    record_signal(signal_file_name + "-close.txt")
+    learn_utils.record_signal(signal_file_name + "-close.txt")
     read_signal(signal_file_name, CANDIDATE_CLOSE_TRANSMIT_SIGNAL)
 
 
