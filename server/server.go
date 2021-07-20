@@ -28,10 +28,13 @@ const (
 	Update
 	LearnOpen
 	LearnClose
+	LearnStop
 	TestOpen
 	TestClose
+	TestStop
 	SetOpen
 	SetClose
+	SetStop
 )
 
 type deployment struct {
