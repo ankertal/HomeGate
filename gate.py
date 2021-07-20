@@ -196,9 +196,11 @@ def main():
                 learn_close()
                 continue
             if button == SetOpen:
+                print("Set1 open was pressed", flush=True)
+
                 # copy org to backup, copy candidate to main
                 now = dateime.now()
-                print("Set open was pressed", flush=True)
+                print("Set2 open was pressed", flush=True)
                 dst_open_signal_file = signals_dir + deployment + "-open.txt"
                 src = "/tmp/" + deployment + "-open.txt"
                 backup_open_signal_file = signals_dir + deployment + "-open.txt-" + now.strftime("%d/%m/%Y-%H-%M-%S")
