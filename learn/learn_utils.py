@@ -81,7 +81,7 @@ def extract_signal_bursts():
         f.close()
 
 
-def extract_button_press():
+def extract_button_press(signal_file_name):
     LARGE_SILENCE_DURATION_MIN = 0.01
     for i in range(len(SIGNAL_SEGMENTS[0])):
         duration = SIGNAL_SEGMENTS[0][i].seconds + \
@@ -95,7 +95,7 @@ def extract_button_press():
             MAX_SILENCE_INDEXES), "\n", flush=True)
         print("going to take samples from ",
               MAX_SILENCE_INDEXES[0], "to ", MAX_SILENCE_INDEXES[2], "\n", flush=True)
-        with open("/tmp/signal.txt", "w") as f:
+        with open(signal_file_name, "w") as f:
             for i in range(MAX_SILENCE_INDEXES[0], MAX_SILENCE_INDEXES[2]):
                 f.write("{0} {1}\n".format(
                     SIGNAL_SEGMENTS[0][i].seconds + SIGNAL_SEGMENTS[0][i].microseconds/1000000.0, SIGNAL_SEGMENTS[1][i]))
@@ -103,18 +103,12 @@ def extract_button_press():
 def test():
     print("learn test", flush=True)
 
+def record_signal(signal_file_name):
+    record_signal()
+    extract_signal_bursts()
+    extract_button_press(signal_file_name)
 
 if __name__ == '__main__':
     record_signal()
     extract_signal_bursts()
     extract_button_press()
-
-    # if we want to inspect the whole recorded data via gnuplot:
-    # for i in range(len(RECEIVED_SIGNAL[0])):
-    #     RECEIVED_SIGNAL[0][i] = RECEIVED_SIGNAL[0][i].seconds + \
-    #         RECEIVED_SIGNAL[0][i].microseconds/1000000.0
-
-    # print('**Plotting results**')
-    # pyplot.plot(RECEIVED_SIGNAL[0], RECEIVED_SIGNAL[1])
-    # pyplot.axis([0, RECORD_DURATION, -1, 2])
-    # pyplot.show()

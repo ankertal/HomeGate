@@ -25,6 +25,10 @@ deployment = "Tal"
 OPEN_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
 STOP_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
 CLOSE_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
+CANDIDATE_OPEN_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
+CANDIDATE_STOP_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
+CANDIDATE_CLOSE_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
+
 
 
 NUM_ATTEMPTS = 5
@@ -51,6 +55,31 @@ Stop = '3'
 Update = '4'
 LearnOpen = '5'
 LearnClose = '6'
+LearnStop = '6'
+TestOpen = '7'
+TestClose = '8'
+TestStop = '9'
+SetOpen = '10'
+SetClose = '11'
+SetStop = '12'
+
+def get_command(command):
+    return {
+        Unknown: "Unknown"
+        Close: "Close"
+        Open: "Open"",
+        Stop: "Stop",
+        Update = "Update"
+        LearnOpen = "learnOpen"
+        LearnClose = "LearnClose"
+        LearnStop = "LearnStop"
+        TestOpen: "TestOpen"
+        TestClose: "TestClose"
+        TestStop = "TestStop"
+        SetOpen = "SetOpen"
+        SetClose = "SetClose"
+        SetStop   = "SetStop"
+    }.get(action, OPEN_TRANSMIT_SIGNAL)
 
 
 def select_signal(action):
@@ -58,7 +87,10 @@ def select_signal(action):
         Open: OPEN_TRANSMIT_SIGNAL,
         Stop: STOP_TRANSMIT_SIGNAL,
         Close: CLOSE_TRANSMIT_SIGNAL
+        TestOpen: CANDIDATE_OPEN_TRANSMIT_SIGNAL
+        TestClose: CANDIDATE_CLOSE_TRANSMIT_SIGNAL
     }.get(action, OPEN_TRANSMIT_SIGNAL)
+
 
 
 # Read a signal file into a signal value array
@@ -107,14 +139,20 @@ def learn_open():
     now = datetime.now()
     print('learn to open pressed: ' +
           deployment + " @ " + now.strftime("%d/%m/%Y %H:%M:%S"), flush=True)
-    
+    signal_file_name = "/tmp/" + deployment + "-open.txt"
+    record_signal(signal_file_name)
+    read_signal(signal_file_name, CANDIDATE_OPEN_TRANSMIT_SIGNAL)
 
 
 def learn_close():
     now = datetime.now()
     print('learn to close pressed: ' +
           deployment + " @ " + now.strftime("%d/%m/%Y %H:%M:%S"), flush=True)
-    
+
+    signal_file_name = "/tmp/" + deployment + "-close.txt"
+    record_signal(signal_file_name + "-close.txt")
+    read_signal(signal_file_name, CANDIDATE_CLOSE_TRANSMIT_SIGNAL)
+
 
 def main():
     # 1. read users from file and build dictionary {user:password}
@@ -153,19 +191,24 @@ def main():
             if button == LearnClose:
                 learn_close()
                 continue
+            if button == SetOpen:
+                # copy org to backup, copy candidate to main
+                print("Set open was pressed", flush=True)
+                continue
+            if button == SetClose:
+                # copy org to backup, copy candidate to main
+                print("Set open was pressed", flush=True)
+                continue
+            
             # Its either a request to close/open the gate
             signal = select_signal(button)
-            print(signal)
+            #print(signal)
             transmit_signal(signal)
         except:
             print('exception\n', flush=True)
 
        
-
-
-if __name__ == "__main__":
-    learn_utils.test()
-
+def load_ctrl_signals():
     open_signal_file = signals_dir + deployment + "-open.txt"
     stop_signal_file = signals_dir + deployment + "-stop.txt"
     close_signal_file = signals_dir + deployment + "-close.txt"
@@ -173,6 +216,10 @@ if __name__ == "__main__":
     read_signal(open_signal_file, OPEN_TRANSMIT_SIGNAL)
     read_signal(stop_signal_file, STOP_TRANSMIT_SIGNAL)
     read_signal(close_signal_file, CLOSE_TRANSMIT_SIGNAL)
+
+if __name__ == "__main__":
     signal.signal(signal.SIGHUP, dump_state)
 
+    learn_utils.test()
+    load_ctrl_signals()
 main()
