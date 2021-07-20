@@ -107,8 +107,8 @@ def extract_button_press(signal_file_name):
 def test():
     print("learn test", flush=True)
 
-def record_signal(signal_file_name):
-    print("record_signal", flush=True)
+def record_button(signal_file_name):
+    print("record_button", flush=True)
     record_signal()
     print("extracting burst", flush=True)
     extract_signal_bursts()
