@@ -204,6 +204,7 @@ def main():
                 continue
             
             # Its either a request to close/open the gate
+            print("Button pressed: " + get_command(button))
             signal = select_signal(button)
             #print(signal)
             transmit_signal(signal)
