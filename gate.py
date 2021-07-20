@@ -2,6 +2,7 @@
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), 'learn'))
 import learn_utils
+import shutil
 
 from datetime import datetime
 from datetime import timedelta
@@ -196,11 +197,24 @@ def main():
                 continue
             if button == SetOpen:
                 # copy org to backup, copy candidate to main
+                now = dateime.now()
                 print("Set open was pressed", flush=True)
+                dst_open_signal_file = signals_dir + deployment + "-open.txt"
+                src = "/tmp/" + deployment + "-open.txt"
+                backup_open_signal_file = signals_dir + deployment + "-open.txt-" + now.strftime("%d/%m/%Y-%H-%M-%S")
+                shutil.copyfile(dst_open_signal_file, backup_open_signal_file)
+                shutil.copyfile(src, dst_open_signal_file)
                 continue
             if button == SetClose:
                 # copy org to backup, copy candidate to main
+                now = dateime.now()
+
                 print("Set open was pressed", flush=True)
+                dst_close_signal_file = signals_dir + deployment + "-close.txt"
+                src = "/tmp/" + deployment + "-close.txt"
+                backup_close_signal_file = signals_dir + deployment + "-close.txt-" + now.strftime("%d/%m/%Y-%H-%M-%S")
+                shutil.copyfile(dst_close_signal_file, backup_close_signal_file)
+                shutil.copyfile(src, dst_open_signal_file)
                 continue
             
             # Its either a request to close/open the gate
