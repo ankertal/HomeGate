@@ -208,6 +208,7 @@ def main():
                 backup_open_signal_file = signals_dir + deployment + "-open.txt-" + now.strftime("%d/%m/%Y-%H-%M-%S")
                 print("backuo file: " + backup_open_signal_file)
                 shutil.copyfile(dst_open_signal_file, backup_open_signal_file)
+                print("second")
                 shutil.copyfile(src, dst_open_signal_file)
                 continue
             if button == SetClose:
