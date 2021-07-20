@@ -65,30 +65,30 @@ SetStop = '12'
 
 def get_command(command):
     return {
-        Unknown: "Unknown"
-        Close: "Close"
-        Open: "Open"",
+        Unknown: "Unknown",
+        Close: "Close",
+        Open: "Open",
         Stop: "Stop",
-        Update = "Update"
-        LearnOpen = "learnOpen"
-        LearnClose = "LearnClose"
-        LearnStop = "LearnStop"
-        TestOpen: "TestOpen"
-        TestClose: "TestClose"
-        TestStop = "TestStop"
-        SetOpen = "SetOpen"
-        SetClose = "SetClose"
-        SetStop   = "SetStop"
-    }.get(action, OPEN_TRANSMIT_SIGNAL)
+        Update = "Update",
+        LearnOpen = "learnOpen",
+        LearnClose = "LearnClose",
+        LearnStop = "LearnStop",
+        TestOpen: "TestOpen",
+        TestClose: "TestClose",
+        TestStop = "TestStop",
+        SetOpen = "SetOpen",
+        SetClose = "SetClose",
+        SetStop   = "SetStop",
+    }.get(command, "Unknown")
 
 
 def select_signal(action):
     return {
         Open: OPEN_TRANSMIT_SIGNAL,
         Stop: STOP_TRANSMIT_SIGNAL,
-        Close: CLOSE_TRANSMIT_SIGNAL
-        TestOpen: CANDIDATE_OPEN_TRANSMIT_SIGNAL
-        TestClose: CANDIDATE_CLOSE_TRANSMIT_SIGNAL
+        Close: CLOSE_TRANSMIT_SIGNAL,
+        TestOpen: CANDIDATE_OPEN_TRANSMIT_SIGNAL,
+        TestClose: CANDIDATE_CLOSE_TRANSMIT_SIGNAL,
     }.get(action, OPEN_TRANSMIT_SIGNAL)
 
 
