@@ -199,7 +199,7 @@ def main():
                 print("Set1 open was pressed", flush=True)
 
                 # copy org to backup, copy candidate to main
-                now = dateime.now()
+                now = datetime.now()
                 print("Set2 open was pressed", flush=True)
                 dst_open_signal_file = signals_dir + deployment + "-open.txt"
                 src = "/tmp/" + deployment + "-open.txt"
