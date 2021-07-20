@@ -142,7 +142,7 @@ def learn_open():
     signal_file_name = "/tmp/" + deployment + "-open.txt"
 
     print("before record", flush=True)
-
+    print("file name " + signal_file_name, flush=True)
     learn_utils.record_signal(signal_file_name)
     read_signal(signal_file_name, CANDIDATE_OPEN_TRANSMIT_SIGNAL)
 
