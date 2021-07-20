@@ -28,8 +28,12 @@ RECEIVE_PIN = 24
 
 
 def record_signal():
+    print('1', flush=True)
     GPIO.setmode(GPIO.BCM)
+    print('2', flush=True)
     GPIO.setup(RECEIVE_PIN, GPIO.IN)
+    print('3', flush=True)
+
     cumulative_time = 0
     beginning_time = datetime.now()
     print('**Started recording**')
