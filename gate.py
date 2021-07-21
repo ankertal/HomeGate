@@ -166,8 +166,6 @@ def test_close():
     transmit_signal(CANDIDATE_CLOSE_TRANSMIT_SIGNAL)
 
 def set_open():
-    print("Set1 open was pressed", flush=True)
-
     # copy org to backup, copy candidate to main
     now = datetime.now()
     dst_open_signal_file = signals_dir + deployment + "-open.txt"
@@ -188,13 +186,20 @@ def set_open():
 def set_close():
     # copy org to backup, copy candidate to main
     now = dateime.now()
-
-    print("Set open was pressed", flush=True)
     dst_close_signal_file = signals_dir + deployment + "-close.txt"
     src = "/tmp/" + deployment + "-close.txt"
     backup_close_signal_file = signals_dir + now.strftime("%d-%m-%Y-%H-%M-%S-") + deployment + "-close.txt" 
-    shutil.copyfile(dst_close_signal_file, backup_close_signal_file)
-    shutil.copyfile(src, dst_open_signal_file)
+        try:
+            shutil.copyfile(dst_close_signal_file, backup_close_signal_file)
+        except:
+            print('Could not backup original close gate signal - probably not recorded yet', flush=True)
+            pass
+    try:
+        shutil.copyfile(src, dst_close_signal_file)
+        read_signal(dst_close_signal_file, CLOSE_TRANSMIT_SIGNAL)
+    except:
+        print('Could not set close gate signal - probably not recorded yet', flush=True)
+        pass
 
 def main():
     # 1. read users from file and build dictionary {user:password}
