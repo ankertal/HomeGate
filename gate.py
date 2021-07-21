@@ -177,9 +177,16 @@ def set_open():
     print("src file: " + src)
     backup_open_signal_file = signals_dir + deployment + "-open.txt-" + now.strftime("%d-%m-%Y-%H-%M-%S")
     print("backup file: " + backup_open_signal_file)
-    shutil.copyfile(dst_open_signal_file, backup_open_signal_file)
-    print("second")
-    shutil.copyfile(src, dst_open_signal_file)
+    try:
+        shutil.copyfile(dst_open_signal_file, backup_open_signal_file)
+    except:
+        print('Could not backup original open gate signal - probably not recorded yet', flush=True)
+        pass
+    try:
+        shutil.copyfile(src, dst_open_signal_file)
+    except:
+        print('Could not set open gate signal - probably not recorded yet', flush=True)
+        pass
 
 def set_close():
     # copy org to backup, copy candidate to main
