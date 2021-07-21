@@ -157,6 +157,7 @@ def learn_close():
 
 def test_open():
     signal_file_name = "/tmp/" + deployment + "-open.txt"
+    print('tramsmitting content of: ' + signal_file_name, flush=True)
     read_signal(signal_file_name, CANDIDATE_OPEN_TRANSMIT_SIGNAL)
     transmit_signal(CANDIDATE_OPEN_TRANSMIT_SIGNAL)
 
