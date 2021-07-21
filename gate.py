@@ -180,6 +180,7 @@ def set_open():
         pass
     try:
         shutil.copyfile(src, dst_open_signal_file)
+        read_signal(dst_open_signal_file, OPEN_TRANSMIT_SIGNAL)
     except:
         print('Could not set open gate signal - probably not recorded yet', flush=True)
         pass
