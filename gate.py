@@ -175,8 +175,8 @@ def set_open():
     print("dst file: " + dst_open_signal_file)
     src = "/tmp/" + deployment + "-open.txt"
     print("src file: " + src)
-    backup_open_signal_file = signals_dir + deployment + "-open.txt-" + now.strftime("%d/%m/%Y-%H-%M-%S")
-    print("backuo file: " + backup_open_signal_file)
+    backup_open_signal_file = signals_dir + deployment + "-open.txt-" + now.strftime("%d-%m-%Y-%H-%M-%S")
+    print("backup file: " + backup_open_signal_file)
     shutil.copyfile(dst_open_signal_file, backup_open_signal_file)
     print("second")
     shutil.copyfile(src, dst_open_signal_file)
@@ -188,7 +188,7 @@ def set_close():
     print("Set open was pressed", flush=True)
     dst_close_signal_file = signals_dir + deployment + "-close.txt"
     src = "/tmp/" + deployment + "-close.txt"
-    backup_close_signal_file = signals_dir + deployment + "-close.txt-" + now.strftime("%d/%m/%Y-%H-%M-%S")
+    backup_close_signal_file = signals_dir + deployment + "-close.txt-" + now.strftime("%d-%m-%Y-%H-%M-%S")
     shutil.copyfile(dst_close_signal_file, backup_close_signal_file)
     shutil.copyfile(src, dst_open_signal_file)
 
