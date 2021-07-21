@@ -170,13 +170,9 @@ def set_open():
 
     # copy org to backup, copy candidate to main
     now = datetime.now()
-    print("Set2 open was pressed", flush=True)
     dst_open_signal_file = signals_dir + deployment + "-open.txt"
-    print("dst file: " + dst_open_signal_file)
     src = "/tmp/" + deployment + "-open.txt"
-    print("src file: " + src)
-    backup_open_signal_file = signals_dir + deployment + "-open.txt-" + now.strftime("%d-%m-%Y-%H-%M-%S")
-    print("backup file: " + backup_open_signal_file)
+    backup_open_signal_file = signals_dir + now.strftime("%d-%m-%Y-%H-%M-%S-") + deployment + "-open.txt"
     try:
         shutil.copyfile(dst_open_signal_file, backup_open_signal_file)
     except:
@@ -195,7 +191,7 @@ def set_close():
     print("Set open was pressed", flush=True)
     dst_close_signal_file = signals_dir + deployment + "-close.txt"
     src = "/tmp/" + deployment + "-close.txt"
-    backup_close_signal_file = signals_dir + deployment + "-close.txt-" + now.strftime("%d-%m-%Y-%H-%M-%S")
+    backup_close_signal_file = signals_dir + now.strftime("%d-%m-%Y-%H-%M-%S-") + deployment + "-close.txt" 
     shutil.copyfile(dst_close_signal_file, backup_close_signal_file)
     shutil.copyfile(src, dst_open_signal_file)
 
