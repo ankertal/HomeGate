@@ -145,8 +145,6 @@ def learn_open():
     print("before record", flush=True)
     print("file name " + signal_file_name, flush=True)
     learn_utils.record_button(signal_file_name)
-    read_signal(signal_file_name, CANDIDATE_OPEN_TRANSMIT_SIGNAL)
-
 
 def learn_close():
     now = datetime.now()
@@ -157,6 +155,42 @@ def learn_close():
     learn_utils.record_button(signal_file_name + "-close.txt")
     read_signal(signal_file_name, CANDIDATE_CLOSE_TRANSMIT_SIGNAL)
 
+def test_open():
+    signal_file_name = "/tmp/" + deployment + "-open.txt"
+    read_signal(signal_file_name, CANDIDATE_OPEN_TRANSMIT_SIGNAL)
+    transmit_signal(CANDIDATE_OPEN_TRANSMIT_SIGNAL)
+
+def test_close():
+    signal_file_name = "/tmp/" + deployment + "-close.txt"
+    read_signal(signal_file_name, CANDIDATE_CLOSE_TRANSMIT_SIGNAL)
+    transmit_signal(CANDIDATE_CLOSE_TRANSMIT_SIGNAL)
+
+def set_open():
+    print("Set1 open was pressed", flush=True)
+
+    # copy org to backup, copy candidate to main
+    now = datetime.now()
+    print("Set2 open was pressed", flush=True)
+    dst_open_signal_file = signals_dir + deployment + "-open.txt"
+    print("dst file: " + dst_open_signal_file)
+    src = "/tmp/" + deployment + "-open.txt"
+    print("src file: " + src)
+    backup_open_signal_file = signals_dir + deployment + "-open.txt-" + now.strftime("%d/%m/%Y-%H-%M-%S")
+    print("backuo file: " + backup_open_signal_file)
+    shutil.copyfile(dst_open_signal_file, backup_open_signal_file)
+    print("second")
+    shutil.copyfile(src, dst_open_signal_file)
+
+def set_close():
+    # copy org to backup, copy candidate to main
+    now = dateime.now()
+
+    print("Set open was pressed", flush=True)
+    dst_close_signal_file = signals_dir + deployment + "-close.txt"
+    src = "/tmp/" + deployment + "-close.txt"
+    backup_close_signal_file = signals_dir + deployment + "-close.txt-" + now.strftime("%d/%m/%Y-%H-%M-%S")
+    shutil.copyfile(dst_close_signal_file, backup_close_signal_file)
+    shutil.copyfile(src, dst_open_signal_file)
 
 def main():
     # 1. read users from file and build dictionary {user:password}
@@ -185,6 +219,8 @@ def main():
             button = statusJson['status']
             log_screen('Deployment: {0}'.format(deployment))
             log_screen('Button Press: {0}'.format(button))
+            print("Button pressed: " + get_command(button))
+
             if button == Unknown:
                 continue
             if button == Update: 
@@ -196,38 +232,24 @@ def main():
                 learn_close()
                 continue
             if button == SetOpen:
-                print("Set1 open was pressed", flush=True)
-
-                # copy org to backup, copy candidate to main
-                now = datetime.now()
-                print("Set2 open was pressed", flush=True)
-                dst_open_signal_file = signals_dir + deployment + "-open.txt"
-                print("dst file: " + dst_open_signal_file)
-                src = "/tmp/" + deployment + "-open.txt"
-                print("src file: " + src)
-                backup_open_signal_file = signals_dir + deployment + "-open.txt-" + now.strftime("%d/%m/%Y-%H-%M-%S")
-                print("backuo file: " + backup_open_signal_file)
-                shutil.copyfile(dst_open_signal_file, backup_open_signal_file)
-                print("second")
-                shutil.copyfile(src, dst_open_signal_file)
+                set_open()                
                 continue
             if button == SetClose:
-                # copy org to backup, copy candidate to main
-                now = dateime.now()
-
-                print("Set open was pressed", flush=True)
-                dst_close_signal_file = signals_dir + deployment + "-close.txt"
-                src = "/tmp/" + deployment + "-close.txt"
-                backup_close_signal_file = signals_dir + deployment + "-close.txt-" + now.strftime("%d/%m/%Y-%H-%M-%S")
-                shutil.copyfile(dst_close_signal_file, backup_close_signal_file)
-                shutil.copyfile(src, dst_open_signal_file)
+                set_close()
+                continue
+            if button == Close:
+                transmit_signal(CLOSE_TRANSMIT_SIGNAL)
+                continue
+            if button == Open:
+                transmit_signal(OPEN_TRANSMIT_SIGNAL)
+                continue
+            if button == TestOpen:
+                test_open()
+                continue
+            if button == TestClose:
+                test_close()
                 continue
             
-            # Its either a request to close/open the gate
-            print("Button pressed: " + get_command(button))
-            signal = select_signal(button)
-            #print(signal)
-            transmit_signal(signal)
         except:
             print('exception\n', flush=True)
 
