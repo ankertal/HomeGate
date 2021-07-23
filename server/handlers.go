@@ -185,7 +185,7 @@ func (srv *HomeGateServer) rcStatus(w http.ResponseWriter, r *http.Request) {
 		deployment.lastGotCommand = time.Now()
 	}
 
-	deployment.rcState = Unknown
+	deployment.rcState = NoOp
 }
 
 func (srv *HomeGateServer) learnOpen(w http.ResponseWriter, r *http.Request) {

@@ -21,7 +21,7 @@ func init() {
 type KeyPressed int
 
 const (
-	Unknown KeyPressed = iota
+	NoOp KeyPressed = iota
 	Close
 	Open
 	Stop

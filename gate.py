@@ -49,7 +49,7 @@ def log_screen(*args, **kwargs):
 # select_signal function takes an action string and return the correspinding signal to transmit. If no
 # match was found, then the default chosen signal is for the "open" action
 
-Unknown = '0'
+NoOp = '0'
 Close = '1'
 Open = '2'
 Stop = '3'
@@ -66,7 +66,7 @@ SetStop = '13'
 
 def get_command(command):
     return {
-        Unknown: "Unknown",
+        NoOp: "NoOp",
         Close: "Close",
         Open: "Open",
         Stop: "Stop",
@@ -80,7 +80,7 @@ def get_command(command):
         SetOpen: "SetOpen",
         SetClose: "SetClose",
         SetStop: "SetStop",
-    }.get(command, "Unknown")
+    }.get(command, "NoOp")
 
 
 def select_signal(action):
@@ -230,7 +230,7 @@ def main():
             log_screen('Button Press: {0}'.format(button))
             print("Button pressed: " + get_command(button))
 
-            if button == Unknown:
+            if button == NoOp:
                 continue
             if button == Update: 
                 return
