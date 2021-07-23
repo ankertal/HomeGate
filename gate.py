@@ -189,11 +189,11 @@ def set_close():
     dst_close_signal_file = signals_dir + deployment + "-close.txt"
     src = "/tmp/" + deployment + "-close.txt"
     backup_close_signal_file = signals_dir + now.strftime("%d-%m-%Y-%H-%M-%S-") + deployment + "-close.txt" 
-        try:
-            shutil.copyfile(dst_close_signal_file, backup_close_signal_file)
-        except:
-            print('Could not backup original close gate signal - probably not recorded yet', flush=True)
-            pass
+    try:
+        shutil.copyfile(dst_close_signal_file, backup_close_signal_file)
+    except:
+        print('Could not backup original close gate signal - probably not recorded yet', flush=True)
+        pass
     try:
         shutil.copyfile(src, dst_close_signal_file)
         read_signal(dst_close_signal_file, CLOSE_TRANSMIT_SIGNAL)
