@@ -260,7 +260,8 @@ def main():
                 continue
             
         except:
-            print('exception\n', flush=True)
+            print('exception\n', sys.exc_info()[0], flush=True)
+            sys.exit("Error in gate main loop, exiting and letting cron restart")
 
        
 def load_ctrl_signals():
