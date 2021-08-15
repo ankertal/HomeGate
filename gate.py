@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/bin/python3
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), 'learn'))
 import learn_utils
