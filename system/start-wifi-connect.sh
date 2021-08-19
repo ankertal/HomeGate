@@ -2,7 +2,7 @@
 [ "${FLOCKER}" != "$0" ] && exec env FLOCKER="$0" flock -en "$0" "$0" "$@" || :
 
 do_log () {
-   printf "%s\n" $1 
+   printf "%s\n" "$1 "
    echo $1  >>  /tmp/status
 }
 
