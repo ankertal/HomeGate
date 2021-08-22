@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
@@ -38,12 +37,11 @@ const (
 )
 
 type deployment struct {
-	name           *string
-	users          map[string]*DeploymentUser
-	rcState        KeyPressed
-	lastOpen       time.Time
-	lastClose      time.Time
-	lastGotCommand time.Time
+	name      *string
+	users     map[string]*DeploymentUser
+	rcState   chan KeyPressed
+	lastOpen  time.Time
+	lastClose time.Time
 }
 
 // HomeGateServer represents the webhook server
@@ -72,9 +70,11 @@ func NewServer(config *ServerConfig) *HomeGateServer {
 		deployments:     make(map[string]*deployment),
 	}
 
-	srv.setupDeployments()
-
 	srv.setupRoutes(r)
+
+	// TODO: this should be populated from a DB
+	// TODO: deployment should be also created dynamically via GUI
+	srv.setupDeployments()
 
 	return srv
 }
@@ -98,13 +98,4 @@ func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 	srv.Router.HandleFunc("/set-open", srv.setOpen).Methods("POST")
 	srv.Router.HandleFunc("/set-close", srv.setClose).Methods("POST")
 	srv.Router.HandleFunc("/stream", srv.stream).Methods("GET")
-	srv.Router.HandleFunc("/status", srv.rcStatus).Methods("POST")
-}
-
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := json.Marshal(payload)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(response)
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httputil"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -49,26 +48,9 @@ type SetEvent struct {
 	GateEvent
 }
 
-func dumpRequest(w http.ResponseWriter, r *http.Request) {
-	log.Printf("handler: inside hooksHandler")
-	var err error
-
-	requestDump, err := httputil.DumpRequest(r, true)
-	if err != nil {
-		http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
-		return
-	}
-
-	log.Printf(string(requestDump))
-
-}
-
 func (srv *HomeGateServer) home(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
-
-	//dumpRequest(w, r)
-
 	fmt.Fprintf(w, "HomeGate Server @ %v, version: %v\n", time.Now(), version)
 }
 
@@ -76,15 +58,12 @@ func (srv *HomeGateServer) times(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	//dumpRequest(w, r)
-
 	params := mux.Vars(r)
 	deploymentName := params["deployment"]
 	dep, ok := srv.deployments[deploymentName]
 	if ok {
 		fmt.Fprintf(w, "Last Open for Deployment : %v --> %v\n", deploymentName, dep.lastOpen)
 		fmt.Fprintf(w, "Last Close for Deployment: %v --> %v\n", deploymentName, dep.lastClose)
-		fmt.Fprintf(w, "Last Got Command for RC  : %v --> %v\n", deploymentName, dep.lastGotCommand)
 	} else {
 		fmt.Fprintf(w, "Could not find a deployment: %v", deploymentName)
 	}
@@ -117,8 +96,6 @@ func (srv *HomeGateServer) checkGateRequestParams(w http.ResponseWriter, deploym
 }
 
 func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
-	//dumpRequest(w, r)
-
 	w.Header().Set("Content-Type", "application/json")
 	var openEvent GateEvent
 	err := json.NewDecoder(r.Body).Decode(&openEvent)
@@ -136,14 +113,24 @@ func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%v", err)
 		return
 	}
-	deployment.rcState = Open
-	deployment.lastOpen = time.Now()
 
-	fmt.Fprintf(w, "%v's gate requested to OPEN Acknowledged!\n", *deployment.name)
+	if deployment.rcState == nil {
+		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
+		return
+	}
+
+	select {
+	case deployment.rcState <- Open:
+		deployment.lastOpen = time.Now()
+		fmt.Fprintf(w, "%v's gate requested to OPEN Acknowledged!\n", *deployment.name)
+	default:
+		log.Printf("client does not read events...")
+		close(deployment.rcState)
+	}
+
 }
 
 func (srv *HomeGateServer) close(w http.ResponseWriter, r *http.Request) {
-	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var closeEvent CloseEvent
@@ -163,43 +150,23 @@ func (srv *HomeGateServer) close(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deployment.rcState = Close
-	deployment.lastClose = time.Now()
-	fmt.Fprintf(w, "%v's gate requested to CLOSE Acknowledged!\n", *deployment.name)
-}
-
-func (srv *HomeGateServer) rcStatus(w http.ResponseWriter, r *http.Request) {
-	//dumpRequest(w, r)
-
-	w.Header().Set("Content-Type", "application/json")
-	var statusEvent StatusEvent
-	err := json.NewDecoder(r.Body).Decode(&statusEvent)
-	if err != nil {
-		log.Printf("handler: failed to decode the StatusEvent message: %v", err.Error())
-		http.Error(w, "Bad Request / data is not StatusEvent !!!", http.StatusBadRequest)
+	if deployment.rcState == nil {
+		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
 		return
 	}
 
-	srv.Lock()
-	defer srv.Unlock()
-
-	deployment, err := srv.checkGateRequestParams(w, statusEvent.Deployment, statusEvent.User, statusEvent.Password)
-	if err != nil {
-		log.Printf("%v", err)
-		return
+	select {
+	case deployment.rcState <- Close:
+		deployment.lastClose = time.Now()
+		fmt.Fprintf(w, "%v's gate requested to CLOSE Acknowledged!\n", *deployment.name)
+	default:
+		log.Printf("client does not read events...")
+		close(deployment.rcState)
 	}
 
-	respondWithJSON(w, http.StatusOK, map[string]string{"status": fmt.Sprintf("%v", deployment.rcState)})
-
-	if deployment.rcState == Open || deployment.rcState == Close || deployment.rcState == Update {
-		deployment.lastGotCommand = time.Now()
-	}
-
-	deployment.rcState = NoOp
 }
 
 func (srv *HomeGateServer) learnOpen(w http.ResponseWriter, r *http.Request) {
-	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var learnEvent LearnEvent
@@ -219,13 +186,23 @@ func (srv *HomeGateServer) learnOpen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deployment.rcState = LearnOpen
+	if deployment.rcState == nil {
+		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
+		return
+	}
+
+	select {
+	case deployment.rcState <- LearnOpen:
+		fmt.Fprintf(w, "%v's gate requested to LearnOpen Acknowledged!\n", *deployment.name)
+	default:
+		log.Printf("client does not read events...")
+		close(deployment.rcState)
+	}
 
 	fmt.Fprintf(w, "%v's gate requested to LEARN Open button -  Acknowledged!\n", *deployment.name)
 }
 
 func (srv *HomeGateServer) learnClose(w http.ResponseWriter, r *http.Request) {
-	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var learnEvent LearnEvent
@@ -245,13 +222,23 @@ func (srv *HomeGateServer) learnClose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deployment.rcState = LearnClose
+	if deployment.rcState == nil {
+		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
+		return
+	}
+
+	select {
+	case deployment.rcState <- LearnClose:
+		fmt.Fprintf(w, "%v's gate requested to LearnClose Acknowledged!\n", *deployment.name)
+	default:
+		log.Printf("client does not read events...")
+		close(deployment.rcState)
+	}
 
 	fmt.Fprintf(w, "%v's gate requested to LEARN Close button -  Acknowledged!\n", *deployment.name)
 }
 
 func (srv *HomeGateServer) testOpen(w http.ResponseWriter, r *http.Request) {
-	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var testEvent TestEvent
@@ -271,13 +258,21 @@ func (srv *HomeGateServer) testOpen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deployment.rcState = TestOpen
+	if deployment.rcState == nil {
+		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
+		return
+	}
 
-	fmt.Fprintf(w, "%v's gate requested to Test New Open button -  Acknowledged!\n", *deployment.name)
+	select {
+	case deployment.rcState <- TestOpen:
+		fmt.Fprintf(w, "%v's gate requested to TestOpen Acknowledged!\n", *deployment.name)
+	default:
+		log.Printf("client does not read events...")
+		close(deployment.rcState)
+	}
 }
 
 func (srv *HomeGateServer) testClose(w http.ResponseWriter, r *http.Request) {
-	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var testEvent TestEvent
@@ -297,13 +292,21 @@ func (srv *HomeGateServer) testClose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deployment.rcState = TestClose
+	if deployment.rcState == nil {
+		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
+		return
+	}
 
-	fmt.Fprintf(w, "%v's gate requested to Test New Close button -  Acknowledged!\n", *deployment.name)
+	select {
+	case deployment.rcState <- TestClose:
+		fmt.Fprintf(w, "%v's gate requested to TestClose Acknowledged!\n", *deployment.name)
+	default:
+		log.Printf("client does not read events...")
+		close(deployment.rcState)
+	}
 }
 
 func (srv *HomeGateServer) setOpen(w http.ResponseWriter, r *http.Request) {
-	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var setEvent SetEvent
@@ -323,13 +326,21 @@ func (srv *HomeGateServer) setOpen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deployment.rcState = SetOpen
+	if deployment.rcState == nil {
+		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
+		return
+	}
 
-	fmt.Fprintf(w, "%v's gate requested to set Open button -  Acknowledged!\n", *deployment.name)
+	select {
+	case deployment.rcState <- SetOpen:
+		fmt.Fprintf(w, "%v's gate requested to SetOpen Acknowledged!\n", *deployment.name)
+	default:
+		log.Printf("client does not read events...")
+		close(deployment.rcState)
+	}
 }
 
 func (srv *HomeGateServer) setClose(w http.ResponseWriter, r *http.Request) {
-	//dumpRequest(w, r)
 
 	w.Header().Set("Content-Type", "application/json")
 	var setEvent SetEvent
@@ -349,9 +360,18 @@ func (srv *HomeGateServer) setClose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deployment.rcState = SetClose
+	if deployment.rcState == nil {
+		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
+		return
+	}
 
-	fmt.Fprintf(w, "%v's gate requested to set Close button -  Acknowledged!\n", *deployment.name)
+	select {
+	case deployment.rcState <- SetClose:
+		fmt.Fprintf(w, "%v's gate requested to SetClose Acknowledged!\n", *deployment.name)
+	default:
+		log.Printf("client does not read events...")
+		close(deployment.rcState)
+	}
 }
 
 func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
@@ -361,16 +381,38 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer c.Close()
-	for {
-		mt, message, err := c.ReadMessage()
+
+	// validate user
+	mt, message, err := c.ReadMessage()
+	if err != nil {
+		http.Error(w, "Bad Request / data is not StatusEvent !!!", http.StatusBadRequest)
+		return
+	}
+	var statusEvent StatusEvent
+	err = json.Unmarshal([]byte(message), &statusEvent)
+	if err != nil {
+		http.Error(w, "Bad Request / data is not StatusEvent !!!", http.StatusBadRequest)
+		return
+	}
+
+	srv.Lock()
+	deployment, err := srv.checkGateRequestParams(w, statusEvent.Deployment, statusEvent.User, statusEvent.Password)
+	if err != nil {
+		http.Error(w, "Bad Request / invalid deployment", http.StatusBadRequest)
+		return
+	}
+
+	// create a new channel for the deployment
+	if deployment.rcState != nil {
+		close(deployment.rcState)
+	}
+
+	deployment.rcState = make(chan KeyPressed, 1)
+	srv.Unlock()
+
+	for rcEvent := range deployment.rcState {
+		err = c.WriteMessage(mt, []byte(fmt.Sprintf("%v", rcEvent)))
 		if err != nil {
-			log.Println("read:", err)
-			break
-		}
-		log.Printf("recv: %s", message)
-		err = c.WriteMessage(mt, message)
-		if err != nil {
-			log.Println("write:", err)
 			break
 		}
 	}

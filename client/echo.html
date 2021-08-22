@@ -40,11 +40,16 @@
 
     function sendMsg() {
         var message = document.getElementById("myMessage").value;
-        myWebSocket.send(message);
+        myWebSocket.send(JSON.stringify({
+            deployment: "Tal",
+            payload: message,
+            user: "tal",
+            password: "024365645"
+        }));
     }
 
     function closeConn() {
-        myWebSocket.close();
+        myWebSocket.terminate();
     }
 
     </script>

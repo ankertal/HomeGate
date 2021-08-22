@@ -94,7 +94,6 @@ func (srv *HomeGateServer) setupDeployments() {
 	for _, configDeployment := range configDeployments.Deployments {
 		var dep deployment
 		dep.name = configDeployment.Name
-		dep.rcState = Update
 		dep.users = make(map[string]*DeploymentUser)
 
 		for _, user := range configDeployment.Users {
