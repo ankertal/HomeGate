@@ -97,11 +97,8 @@ func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 	srv.Router.HandleFunc("/test-close", srv.testClose).Methods("POST")
 	srv.Router.HandleFunc("/set-open", srv.setOpen).Methods("POST")
 	srv.Router.HandleFunc("/set-close", srv.setClose).Methods("POST")
+	srv.Router.HandleFunc("/stream", srv.stream).Methods("GET")
 	srv.Router.HandleFunc("/status", srv.rcStatus).Methods("POST")
-}
-
-func respondWithError(w http.ResponseWriter, code int, message string) {
-	respondWithJSON(w, code, map[string]string{"error": message})
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {

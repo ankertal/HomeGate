@@ -28,8 +28,7 @@ type DeploymentsConfig struct {
 // ServerConfig contains required params
 type ServerConfig struct {
 	// The http port where the server listens for requests.
-	Port        string   `envconfig:"http_port" default:"80"`
-	Deployments []string `envconfig:"deployments" default:"Taron,Tal,Gilad,Doron"`
+	Port string `envconfig:"http_port" default:"80"`
 }
 
 // LoadConfig loads  server configuration from the environment
@@ -78,7 +77,7 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 }
 
 func (srv *HomeGateServer) setupDeployments() {
-	jsonFile, err := os.Open("/home/ankertal/Work/HomeGate/server/deployments.json")
+	jsonFile, err := os.Open("/Users/yaronweinsberg/work/HomeGate/server/deployments.json")
 	if err != nil {
 		panic("Could not find a deployments file")
 	}

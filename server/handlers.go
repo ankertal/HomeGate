@@ -8,10 +8,20 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
 
 var version = "1.0"
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	// Resolve cross-domain problems
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 type GateEvent struct {
 	Deployment *string `json:"deployment,omitempty"`
@@ -342,4 +352,26 @@ func (srv *HomeGateServer) setClose(w http.ResponseWriter, r *http.Request) {
 	deployment.rcState = SetClose
 
 	fmt.Fprintf(w, "%v's gate requested to set Close button -  Acknowledged!\n", *deployment.name)
+}
+
+func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
+	c, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Print("upgrade:", err)
+		return
+	}
+	defer c.Close()
+	for {
+		mt, message, err := c.ReadMessage()
+		if err != nil {
+			log.Println("read:", err)
+			break
+		}
+		log.Printf("recv: %s", message)
+		err = c.WriteMessage(mt, message)
+		if err != nil {
+			log.Println("write:", err)
+			break
+		}
+	}
 }
