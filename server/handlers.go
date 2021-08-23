@@ -48,12 +48,6 @@ type SetEvent struct {
 	GateEvent
 }
 
-func (srv *HomeGateServer) home(w http.ResponseWriter, r *http.Request) {
-	srv.Lock()
-	defer srv.Unlock()
-	fmt.Fprintf(w, "HomeGate Server @ %v, version: %v\n", time.Now(), version)
-}
-
 func (srv *HomeGateServer) times(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()

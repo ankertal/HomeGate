@@ -79,7 +79,6 @@ func NewServer(config *ServerConfig) *HomeGateServer {
 }
 
 func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
-	srv.Router.HandleFunc("/", srv.home).Methods("GET")
 	srv.Router.HandleFunc("/times/{deployment}", srv.times).Methods("GET")
 	srv.Router.HandleFunc("/open", srv.open).Methods("POST")
 	srv.Router.HandleFunc("/close", srv.close).Methods("POST")
@@ -90,4 +89,15 @@ func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 	srv.Router.HandleFunc("/set-open", srv.setOpen).Methods("POST")
 	srv.Router.HandleFunc("/set-close", srv.setClose).Methods("POST")
 	srv.Router.HandleFunc("/stream", srv.stream).Methods("GET")
+
+	// On the default page we will simply serve our static index page.
+	r.Handle("/", http.FileServer(http.Dir("./views/")))
+
+	// We will setup our server so we can serve static assest like images, css from the /static/{file} route
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+
 }
+
+var NotImplemented = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Not Implemented"))
+})
