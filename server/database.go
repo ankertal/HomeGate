@@ -3,23 +3,23 @@ package server
 import (
 	"fmt"
 	"log"
+	"os"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // GetDatabase returns database connection
 func GetDatabase() *gorm.DB {
-	databasename := "postgres"
-	database := "postgres"
-	databasepassword := ""
-	databaseurl := "postgres://postgres:" + databasepassword + "@localhost/" + databasename + "?sslmode=disable"
+	dsn := fmt.Sprintf("host=localhost user=%s password=%s dbname=%s port=%s sslmode=disable",
+		os.Getenv("HOMEGATE_PSQL_USER"), os.Getenv("HOMEGATE_PSQL_PASSWORD"), os.Getenv("HOMEGATE_PSQL_DBNAME"), os.Getenv("HOMEGATE_PSQL_DBPORT"))
 
-	connection, err := gorm.Open(database, databaseurl)
+	log.Print("Connecting to Postgres DB...")
+	connection, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalln("Invalid database url")
 	}
-	sqldb := connection.DB()
+	sqldb, _ := connection.DB()
 
 	err = sqldb.Ping()
 	if err != nil {
@@ -38,6 +38,6 @@ func InitialMigration() {
 
 // CloseDatabase closes database connection
 func CloseDatabase(connection *gorm.DB) {
-	sqldb := connection.DB()
+	sqldb, _ := connection.DB()
 	sqldb.Close()
 }

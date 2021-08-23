@@ -10,9 +10,16 @@ import (
 
 	"github.com/gate/server"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading env file \n", err)
+	}
+
 	config, err := server.LoadConfig()
 	if err != nil {
 		log.Fatalf("Error reading config: %v", err)

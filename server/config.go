@@ -29,6 +29,21 @@ type DeploymentsConfig struct {
 type ServerConfig struct {
 	// The http port where the server listens for requests.
 	Port string `envconfig:"http_port" default:"80"`
+
+	// database user name
+	DBUser string `envconfig:"psql_user" default:"postgres"`
+
+	// database password
+	DBPassword string `envconfig:"psql_password" default:""`
+
+	// database name
+	DBName string `envconfig:"psql_dbname" default:"postgres"`
+
+	// database host
+	DBHost string `envconfig:"psql_host" default:"localhost"`
+
+	// database host
+	DBPort string `envconfig:"psql_port" default:"5432"`
 }
 
 // LoadConfig loads  server configuration from the environment
