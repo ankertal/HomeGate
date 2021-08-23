@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -77,13 +76,6 @@ func NewServer(config *ServerConfig) *HomeGateServer {
 	srv.setupDeployments()
 
 	return srv
-}
-
-// Shutdown the webhook server
-func (srv *HomeGateServer) Shutdown() {
-	log.Infof("****** Calling Shutdown ******")
-	close(srv.ShutdownChannel)
-	srv.Server.Shutdown(context.Background())
 }
 
 func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
