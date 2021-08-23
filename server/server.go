@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
@@ -49,7 +50,6 @@ type HomeGateServer struct {
 	*http.Server
 	*mux.Router
 	*sync.Mutex
-	wg              *sync.WaitGroup
 	ShutdownChannel chan struct{} // shutdown channel
 	deployments     map[string]*deployment
 }
@@ -60,12 +60,22 @@ func NewServer(config *ServerConfig) *HomeGateServer {
 	r := mux.NewRouter()
 
 	srv := &HomeGateServer{
-		config:          config,
-		Server:          &http.Server{Addr: addr, Handler: r},
+		config: config,
+		Server: &http.Server{
+			Addr: addr,
+			Handler: handlers.CORS(
+				handlers.AllowedHeaders(
+					[]string{
+						"X-Requested-With",
+						"Access-Control-Allow-Origin",
+						"Content-Type", "Authorization",
+					}),
+				handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"}),
+				handlers.AllowedOrigins([]string{"*"}))(r),
+		},
 		Router:          r,
 		Mutex:           &sync.Mutex{},
 		ShutdownChannel: make(chan struct{}),
-		wg:              &sync.WaitGroup{},
 		deployments:     make(map[string]*deployment),
 	}
 
@@ -96,6 +106,17 @@ func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 	// We will setup our server so we can serve static assest like images, css from the /static/{file} route
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 
+	r.HandleFunc("/signup", srv.signUp).Methods("POST")
+	r.HandleFunc("/signin", srv.signIn).Methods("POST")
+	r.HandleFunc("/admin", IsAuthorized(srv.adminIndex)).Methods("GET")
+	r.HandleFunc("/user", IsAuthorized(srv.userIndex)).Methods("GET")
+	r.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Access-Control-Request-Headers, Access-Control-Request-Method, Connection, Host, Origin, User-Agent, Referer, Cache-Control, X-header")
+	})
+
+	InitialMigration()
 }
 
 var NotImplemented = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
