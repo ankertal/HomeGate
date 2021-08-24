@@ -6,9 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/rs/cors"
 )
 
 func init() {
@@ -59,14 +60,18 @@ func NewServer(config *ServerConfig) *HomeGateServer {
 	addr := fmt.Sprintf(":%s", config.Port)
 	r := mux.NewRouter()
 
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+	})
+
 	srv := &HomeGateServer{
 		config: config,
 		Server: &http.Server{
-			Addr: addr,
-			Handler: handlers.CORS(
-				handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"}),
-				handlers.AllowedOrigins([]string{"*"}),
-				handlers.AllowedHeaders([]string{"*"}))(r),
+			Addr:    addr,
+			Handler: c.Handler(r),
 		},
 		Router:          r,
 		Mutex:           &sync.Mutex{},
@@ -84,7 +89,6 @@ func NewServer(config *ServerConfig) *HomeGateServer {
 }
 
 func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
-
 	r.HandleFunc("/times/{deployment}", srv.times).Methods("GET")
 	r.HandleFunc("/open", srv.open).Methods("POST")
 	r.HandleFunc("/close", srv.close).Methods("POST")
@@ -99,19 +103,13 @@ func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 	// We will setup our server so we can serve static assest like images, css from the /static/{file} route
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 
-	// On the default page we will simply serve our static index page.
-	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./frontend/dist/"))))
-
 	r.HandleFunc("/signup", srv.signUp).Methods("POST")
 	r.HandleFunc("/signin", srv.signIn).Methods("POST")
 	r.HandleFunc("/admin", IsAuthorized(srv.adminIndex)).Methods("GET")
 	r.HandleFunc("/user", IsAuthorized(srv.userIndex)).Methods("GET")
 
-	r.Methods("GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "*")
-	})
+	// MUST put this last as order matters
+	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./frontend/dist/"))))
 
 	InitialMigration()
 }

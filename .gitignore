@@ -2,4 +2,4 @@
 .../pyc
 node_modules/
 dist/
-cmd/homegate/homegate
+server/cmd/homegate/homegate

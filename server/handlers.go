@@ -419,8 +419,7 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var err Error
 		err = SetError(err, "Error in reading payload.")
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(err)
+		http.Error(w, err.Message, http.StatusBadRequest)
 		return
 	}
 
@@ -431,8 +430,7 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 	if dbuser.Email != "" {
 		var err Error
 		err = SetError(err, "Email already in use")
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(err)
+		http.Error(w, err.Message, http.StatusBadRequest)
 		return
 	}
 
@@ -448,6 +446,10 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+
 	connection := GetDatabase()
 	defer CloseDatabase(connection)
 
@@ -457,8 +459,7 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var err Error
 		err = SetError(err, "Error in reading payload.")
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(err)
+		http.Error(w, err.Message, http.StatusBadRequest)
 		return
 	}
 
@@ -468,8 +469,7 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 	if authUser.Email == "" {
 		var err Error
 		err = SetError(err, "Username or Password is incorrect")
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(err)
+		http.Error(w, err.Message, http.StatusBadRequest)
 		return
 	}
 
@@ -478,8 +478,7 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 	if !check {
 		var err Error
 		err = SetError(err, "Username or Password is incorrect")
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(err)
+		http.Error(w, err.Message, http.StatusBadRequest)
 		return
 	}
 
@@ -488,8 +487,7 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var err Error
 		err = SetError(err, "Failed to generate token")
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(err)
+		http.Error(w, err.Message, http.StatusBadRequest)
 		return
 	}
 
