@@ -28,3 +28,10 @@ type Error struct {
 	IsError bool   `json:"isError"`
 	Message string `json:"message"`
 }
+
+type LoginResponse struct {
+	ID          uint     `json:"id"`
+	Email       string   `json:"email"`
+	AccessToken string   `json:"accessToken"`
+	Roles       []string `json:"roles"`
+}

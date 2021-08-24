@@ -483,7 +483,8 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validToken, err := GenerateJWT(authUser.Email, authUser.Role)
+	// TODO: decide if we need a claim ?
+	validToken, err := GenerateJWT(authUser.Email, "user")
 	if err != nil {
 		var err Error
 		err = SetError(err, "Failed to generate token")
@@ -492,12 +493,14 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var token Token
-	token.Email = authUser.Email
-	token.Role = authUser.Role
-	token.TokenString = validToken
+	loginResponse := LoginResponse{
+		ID:          authUser.ID,
+		Email:       authUser.Email,
+		AccessToken: validToken,
+		Roles:       []string{"yaron-gate", "tal-gate"},
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(token)
+	json.NewEncoder(w).Encode(loginResponse)
 }
 
 func (srv *HomeGateServer) adminIndex(w http.ResponseWriter, r *http.Request) {
