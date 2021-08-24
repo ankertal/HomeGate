@@ -15,7 +15,7 @@ Make sure npm is installed:
     # npm run serve
 
     # to build dist for production
-    npm build
+    npm run build
 ```
 
 ## Credit
