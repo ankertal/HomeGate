@@ -64,14 +64,9 @@ func NewServer(config *ServerConfig) *HomeGateServer {
 		Server: &http.Server{
 			Addr: addr,
 			Handler: handlers.CORS(
-				handlers.AllowedHeaders(
-					[]string{
-						"X-Requested-With",
-						"Access-Control-Allow-Origin",
-						"Content-Type", "Authorization",
-					}),
 				handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"}),
-				handlers.AllowedOrigins([]string{"*"}))(r),
+				handlers.AllowedOrigins([]string{"*"}),
+				handlers.AllowedHeaders([]string{"*"}))(r),
 		},
 		Router:          r,
 		Mutex:           &sync.Mutex{},
@@ -89,31 +84,33 @@ func NewServer(config *ServerConfig) *HomeGateServer {
 }
 
 func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
-	srv.Router.HandleFunc("/times/{deployment}", srv.times).Methods("GET")
-	srv.Router.HandleFunc("/open", srv.open).Methods("POST")
-	srv.Router.HandleFunc("/close", srv.close).Methods("POST")
-	srv.Router.HandleFunc("/learn-open", srv.learnOpen).Methods("POST")
-	srv.Router.HandleFunc("/learn-close", srv.learnClose).Methods("POST")
-	srv.Router.HandleFunc("/test-open", srv.testOpen).Methods("POST")
-	srv.Router.HandleFunc("/test-close", srv.testClose).Methods("POST")
-	srv.Router.HandleFunc("/set-open", srv.setOpen).Methods("POST")
-	srv.Router.HandleFunc("/set-close", srv.setClose).Methods("POST")
-	srv.Router.HandleFunc("/stream", srv.stream).Methods("GET")
 
-	// On the default page we will simply serve our static index page.
-	r.Handle("/", http.FileServer(http.Dir("./views/")))
+	r.HandleFunc("/times/{deployment}", srv.times).Methods("GET")
+	r.HandleFunc("/open", srv.open).Methods("POST")
+	r.HandleFunc("/close", srv.close).Methods("POST")
+	r.HandleFunc("/learn-open", srv.learnOpen).Methods("POST")
+	r.HandleFunc("/learn-close", srv.learnClose).Methods("POST")
+	r.HandleFunc("/test-open", srv.testOpen).Methods("POST")
+	r.HandleFunc("/test-close", srv.testClose).Methods("POST")
+	r.HandleFunc("/set-open", srv.setOpen).Methods("POST")
+	r.HandleFunc("/set-close", srv.setClose).Methods("POST")
+	r.HandleFunc("/stream", srv.stream).Methods("GET")
 
 	// We will setup our server so we can serve static assest like images, css from the /static/{file} route
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+
+	// On the default page we will simply serve our static index page.
+	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./frontend/dist/"))))
 
 	r.HandleFunc("/signup", srv.signUp).Methods("POST")
 	r.HandleFunc("/signin", srv.signIn).Methods("POST")
 	r.HandleFunc("/admin", IsAuthorized(srv.adminIndex)).Methods("GET")
 	r.HandleFunc("/user", IsAuthorized(srv.userIndex)).Methods("GET")
-	r.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Access-Control-Request-Headers, Access-Control-Request-Method, Connection, Host, Origin, User-Agent, Referer, Cache-Control, X-header")
+
+	r.Methods("GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
 	})
 
 	InitialMigration()
