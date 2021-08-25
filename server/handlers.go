@@ -521,9 +521,15 @@ func (srv *HomeGateServer) adminIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *HomeGateServer) userIndex(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Role") != "user" {
-		w.Write([]byte("Not Authorized."))
-		return
+	w.Header().Set("Content-Type", "application/json")
+
+	userData := map[string]interface{}{
+		"name": "Yaron Weinsberg",
+		"gates": []interface{}{
+			"gate-1",
+			"gate-30",
+		},
 	}
-	w.Write([]byte("Welcome, User."))
+
+	json.NewEncoder(w).Encode(userData)
 }

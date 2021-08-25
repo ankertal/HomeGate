@@ -9,7 +9,7 @@ class UserService {
   }
 
   getUserBoard() {
-    return axios.get(API_URL + 'user.html', { headers: authHeader() });
+    return axios.get('http://localhost:80/user', { headers: authHeader() });
   }
 
 }
