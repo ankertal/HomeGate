@@ -98,6 +98,8 @@ export default {
             data => {
               this.message = data.message;
               this.successful = true;
+              // uncomment if we want to move to login screen
+              // this.$router.push('/login');
             },
             error => {
               this.message =
