@@ -439,6 +439,10 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 		log.Fatalln("Error in password hashing.")
 	}
 
+	// allocate a unique gate identifier to the user
+	gateID, _ := sf.NextID()
+	user.Gates = []Gate{{Name: fmt.Sprintf("gate-%v", gateID)}}
+
 	//insert user details in database
 	connection.Create(&user)
 
@@ -498,13 +502,18 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var userGates []string
+	for _, gate := range authUser.Gates {
+		userGates = append(userGates, gate.Name)
+	}
+
 	loginResponse := LoginResponse{
 		ID:          authUser.ID,
 		Message:     fmt.Sprintf("%v login OK", authUser.Name),
 		UserName:    authUser.Name,
 		Email:       authUser.Email,
 		AccessToken: validToken,
-		Roles:       []string{"yaron-gate", "tal-gate"},
+		Gates:       userGates,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(loginResponse)
@@ -521,12 +530,36 @@ func (srv *HomeGateServer) adminIndex(w http.ResponseWriter, r *http.Request) {
 func (srv *HomeGateServer) userIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	// get the email from the token
+	userEmail := r.Header.Get("Email")
+	if userEmail == "" {
+		var err Error
+		err = SetError(err, "Failed to get user email from token")
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	connection := GetDatabase()
+	defer CloseDatabase(connection)
+
+	var authUser User
+	connection.Preload("Gates").Where("email = 	?", userEmail).First(&authUser)
+
+	if authUser.Email == "" {
+		var err Error
+		err = SetError(err, "user email does not exists in database")
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	var userGates []string
+	for _, gate := range authUser.Gates {
+		userGates = append(userGates, gate.Name)
+	}
+
 	userData := map[string]interface{}{
-		"name": "Yaron Weinsberg",
-		"gates": []interface{}{
-			"gate-1",
-			"gate-30",
-		},
+		"name":  authUser.Name,
+		"gates": userGates,
 	}
 
 	json.NewEncoder(w).Encode(userData)

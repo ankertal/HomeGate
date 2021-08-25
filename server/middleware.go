@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -19,7 +20,7 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		var mySigningKey = []byte(secretkey)
+		var mySigningKey = []byte(os.Getenv("HOMEGATE_JWT_SECRET_KEY"))
 
 		token, err := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -42,8 +43,17 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 				return
 
 			} else if claims["role"] == "user" {
-				r.Header.Set("Role", "user")
-				handler.ServeHTTP(w, r)
+				userEmail, ok := claims["email"]
+				if ok && userEmail != "" {
+					r.Header.Set("Role", "user")
+					r.Header.Set("Email", userEmail.(string))
+					handler.ServeHTTP(w, r)
+				} else {
+					var err Error
+					err = SetError(err, "Your Token is bogus, please login again")
+					json.NewEncoder(w).Encode(err)
+					return
+				}
 				return
 
 			}

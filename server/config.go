@@ -44,6 +44,9 @@ type ServerConfig struct {
 
 	// database host
 	DBPort string `envconfig:"psql_port" default:"5432"`
+
+	// jwt secret key to sign the tokens
+	JWTSecretKey string `envconfig:"jwt_secret_key" default:"homegate;5060102"`
 }
 
 // LoadConfig loads  server configuration from the environment

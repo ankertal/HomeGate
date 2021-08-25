@@ -4,13 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/sony/sonyflake"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var secretkey string = "secretkeyjwt"
+var sf *sonyflake.Sonyflake
+
+func init() {
+	sf = sonyflake.NewSonyflake(sonyflake.Settings{StartTime: time.Now()})
+	if sf == nil {
+		panic("sonyflake not created")
+	}
+}
 
 //set error message in Error struct
 func SetError(err Error, message string) Error {
@@ -39,7 +48,7 @@ func CheckPasswordHash(password, hash string) bool {
 
 //Generate JWT token
 func GenerateJWT(email, role string) (string, error) {
-	var mySigningKey = []byte(secretkey)
+	var mySigningKey = []byte(os.Getenv("HOMEGATE_JWT_SECRET_KEY"))
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["authorized"] = true

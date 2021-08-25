@@ -11,6 +11,12 @@ type User struct {
 	Email    string `gorm:"unique" json:"email"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
+	Gates    []Gate `json:"gates" gorm:"many2many:user_gates;"`
+}
+
+type Gate struct {
+	gorm.Model
+	Name string `json:"name" gorm:"unique"`
 }
 
 type Authentication struct {
@@ -35,7 +41,7 @@ type LoginResponse struct {
 	UserName    string   `json:"username"`
 	Email       string   `json:"email"`
 	AccessToken string   `json:"accessToken"`
-	Roles       []string `json:"roles"`
+	Gates       []string `json:"gates"`
 }
 
 type RegisterResponse struct {

@@ -33,7 +33,7 @@ func GetDatabase() *gorm.DB {
 func InitialMigration() {
 	connection := GetDatabase()
 	defer CloseDatabase(connection)
-	connection.AutoMigrate(User{})
+	connection.AutoMigrate(User{}, Gate{})
 }
 
 // CloseDatabase closes database connection
