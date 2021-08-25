@@ -3,3 +3,4 @@
 node_modules/
 dist/
 server/cmd/homegate/homegate
+.vscode/launch.json

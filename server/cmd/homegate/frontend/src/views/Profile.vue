@@ -2,7 +2,7 @@
   <div class="container">
     <header class="jumbotron">
       <h3>
-        <strong>{{currentUser.username}}</strong> Profile
+        HomeGate <strong>{{currentUser.username}}</strong> Profile
       </h3>
     </header>
     <p>

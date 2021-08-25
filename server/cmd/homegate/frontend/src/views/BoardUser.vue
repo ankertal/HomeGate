@@ -1,8 +1,13 @@
 <template>
   <div class="container">
     <header class="jumbotron">
-      <h3>{{content}}</h3>
+      <h3>
+        HomeGate's <strong>{{currentUser.username}}</strong> Settings:
+      </h3>
     </header>
+    <p>
+       {{content}}
+    </p>
   </div>
 </template>
 
@@ -11,6 +16,11 @@ import UserService from '../services/user.service';
 
 export default {
   name: 'User',
+  computed: {
+    currentUser() {
+      return this.$store.state.auth.user;
+    }
+  },
   data() {
     return {
       content: ''

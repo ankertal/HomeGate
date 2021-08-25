@@ -441,8 +441,17 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 
 	//insert user details in database
 	connection.Create(&user)
+
+	// return the response with a welcome message
+	registerResponse := struct {
+		User
+		Message string `json:"message"`
+	}{
+		User:    user,
+		Message: fmt.Sprintf("%v registered OK", user.Name),
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(registerResponse)
 }
 
 func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
@@ -493,6 +502,7 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 
 	loginResponse := LoginResponse{
 		ID:          authUser.ID,
+		UserName:    authUser.Name,
 		Email:       authUser.Email,
 		AccessToken: validToken,
 		Roles:       []string{"yaron-gate", "tal-gate"},

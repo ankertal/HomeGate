@@ -7,7 +7,7 @@ import (
 
 type User struct {
 	gorm.Model
-	Name     string `json:"name"`
+	Name     string `json:"username"`
 	Email    string `gorm:"unique" json:"email"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
@@ -31,6 +31,7 @@ type Error struct {
 
 type LoginResponse struct {
 	ID          uint     `json:"id"`
+	UserName    string   `json:"username"`
 	Email       string   `json:"email"`
 	AccessToken string   `json:"accessToken"`
 	Roles       []string `json:"roles"`
