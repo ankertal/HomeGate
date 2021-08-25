@@ -9,6 +9,11 @@
     <ul>
       <li v-for="(gate, index) in content.gates" :key="index">{{ gate }}</li>
     </ul>
+    <div id="counter">Counter: {{ counter }}</div>
+    <div id="two-way-binding">
+      <p>{{ message }}</p>
+      <input v-model="message" />
+    </div>
   </div>
 </template>
 
@@ -25,6 +30,8 @@ export default {
   data() {
     return {
       content: "",
+      counter: 0,
+      message: "Hello Vue!",
     };
   },
   mounted() {
@@ -39,6 +46,10 @@ export default {
           error.toString();
       }
     );
+
+    setInterval(() => {
+      this.counter++;
+    }, 1000);
   },
 };
 </script>
