@@ -1,7 +1,9 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -15,6 +17,12 @@ func SetError(err Error, message string) Error {
 	err.IsError = true
 	err.Message = message
 	return err
+}
+
+func (err Error) sendToClient(w http.ResponseWriter, httpCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(httpCode)
+	json.NewEncoder(w).Encode(map[string]string{"message": err.Message})
 }
 
 //take password as input and generate new hash password from it

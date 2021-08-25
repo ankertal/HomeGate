@@ -419,7 +419,7 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var err Error
 		err = SetError(err, "Error in reading payload.")
-		http.Error(w, err.Message, http.StatusBadRequest)
+		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
 
@@ -430,7 +430,7 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 	if dbuser.Email != "" {
 		var err Error
 		err = SetError(err, "Email already in use")
-		http.Error(w, err.Message, http.StatusBadRequest)
+		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
 
@@ -468,7 +468,7 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var err Error
 		err = SetError(err, "Error in reading payload.")
-		http.Error(w, err.Message, http.StatusBadRequest)
+		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
 
@@ -478,7 +478,7 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 	if authUser.Email == "" {
 		var err Error
 		err = SetError(err, "Username or Password is incorrect")
-		http.Error(w, err.Message, http.StatusBadRequest)
+		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
 
@@ -487,7 +487,7 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 	if !check {
 		var err Error
 		err = SetError(err, "Username or Password is incorrect")
-		http.Error(w, err.Message, http.StatusBadRequest)
+		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
 
@@ -496,12 +496,13 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var err Error
 		err = SetError(err, "Failed to generate token")
-		http.Error(w, err.Message, http.StatusBadRequest)
+		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
 
 	loginResponse := LoginResponse{
 		ID:          authUser.ID,
+		Message:     fmt.Sprintf("%v login OK", authUser.Name),
 		UserName:    authUser.Name,
 		Email:       authUser.Email,
 		AccessToken: validToken,

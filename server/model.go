@@ -31,6 +31,7 @@ type Error struct {
 
 type LoginResponse struct {
 	ID          uint     `json:"id"`
+	Message     string   `json:"message"`
 	UserName    string   `json:"username"`
 	Email       string   `json:"email"`
 	AccessToken string   `json:"accessToken"`
