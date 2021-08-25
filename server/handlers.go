@@ -443,11 +443,9 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 	connection.Create(&user)
 
 	// return the response with a welcome message
-	registerResponse := struct {
-		User
-		Message string `json:"message"`
-	}{
-		User:    user,
+	registerResponse := RegisterResponse{
+		Name:    user.Name,
+		Email:   user.Email,
 		Message: fmt.Sprintf("%v registered OK", user.Name),
 	}
 	w.Header().Set("Content-Type", "application/json")

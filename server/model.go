@@ -37,3 +37,9 @@ type LoginResponse struct {
 	AccessToken string   `json:"accessToken"`
 	Roles       []string `json:"roles"`
 }
+
+type RegisterResponse struct {
+	Name    string `json:"username"`
+	Email   string `gorm:"unique" json:"email"`
+	Message string `json:"message"`
+}
