@@ -14,6 +14,10 @@
       <p>{{ message }}</p>
       <input v-model="message" />
     </div>
+    <div id="event-handling">
+      <p>{{ message }}</p>
+      <button v-on:click="reverseMessage">Reverse Message</button>
+    </div>
   </div>
 </template>
 
@@ -50,6 +54,11 @@ export default {
     setInterval(() => {
       this.counter++;
     }, 1000);
+  },
+  methods: {
+    reverseMessage() {
+      this.message = this.message.split("").reverse().join("");
+    },
   },
 };
 </script>
