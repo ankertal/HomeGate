@@ -7,11 +7,12 @@ import (
 
 type User struct {
 	gorm.Model
-	Name     string `json:"username"`
-	Email    string `gorm:"unique" json:"email"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
-	Gates    []Gate `json:"gates" gorm:"many2many:user_gates;"`
+	Name       string `json:"username"`
+	Email      string `gorm:"unique" json:"email"`
+	Password   string `json:"password"`
+	Role       string `json:"role"`
+	MyGateName string `json:"my_gate"`
+	Gates      []Gate `json:"gates" gorm:"many2many:user_gates;"`
 }
 
 type Gate struct {
@@ -41,6 +42,7 @@ type LoginResponse struct {
 	UserName    string   `json:"username"`
 	Email       string   `json:"email"`
 	AccessToken string   `json:"accessToken"`
+	MyGateName  string   `json:"my_gate"`
 	Gates       []string `json:"gates"`
 }
 
@@ -48,4 +50,30 @@ type RegisterResponse struct {
 	Name    string `json:"username"`
 	Email   string `gorm:"unique" json:"email"`
 	Message string `json:"message"`
+}
+
+type GateEvent struct {
+	GateName *string `json:"gate_name,omitempty"`
+	Email    *string `json:"email,omitempty"`
+	Password *string `json:"password,omitempty"`
+}
+
+type CloseEvent struct {
+	GateEvent
+}
+
+type StatusEvent struct {
+	GateEvent
+}
+
+type LearnEvent struct {
+	GateEvent
+}
+
+type TestEvent struct {
+	GateEvent
+}
+
+type SetEvent struct {
+	GateEvent
 }

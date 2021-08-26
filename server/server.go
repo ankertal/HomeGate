@@ -37,12 +37,17 @@ const (
 	SetStop
 )
 
-type deployment struct {
-	name      *string
-	users     map[string]*DeploymentUser
+// userGate represents a user gate  (identified by the gate uuid name)
+type userGate struct {
+	name      string
+	users     map[string]User
 	rcState   chan KeyPressed
 	lastOpen  time.Time
 	lastClose time.Time
+}
+
+func (d *userGate) addUser(u User) {
+	d.users[u.Email] = u
 }
 
 // HomeGateServer represents the webhook server
@@ -52,7 +57,7 @@ type HomeGateServer struct {
 	*mux.Router
 	*sync.Mutex
 	ShutdownChannel chan struct{} // shutdown channel
-	deployments     map[string]*deployment
+	gates           map[string]*userGate
 }
 
 // NewServer creates a new webhook server
@@ -76,20 +81,20 @@ func NewServer(config *ServerConfig) *HomeGateServer {
 		Router:          r,
 		Mutex:           &sync.Mutex{},
 		ShutdownChannel: make(chan struct{}),
-		deployments:     make(map[string]*deployment),
+		gates:           make(map[string]*userGate),
 	}
 
 	srv.setupRoutes(r)
 
-	// TODO: this should be populated from a DB
-	// TODO: deployment should be also created dynamically via GUI
-	srv.setupDeployments()
+	InitialMigration()
+
+	srv.setupGates()
 
 	return srv
 }
 
 func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
-	r.HandleFunc("/times/{deployment}", srv.times).Methods("GET")
+	r.HandleFunc("/times/{gatename}", srv.times).Methods("GET")
 	r.HandleFunc("/open", srv.open).Methods("POST")
 	r.HandleFunc("/close", srv.close).Methods("POST")
 	r.HandleFunc("/learn-open", srv.learnOpen).Methods("POST")
@@ -110,8 +115,6 @@ func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 
 	// MUST put this last as order matters
 	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./frontend/dist/"))))
-
-	InitialMigration()
 }
 
 var NotImplemented = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

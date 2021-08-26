@@ -1,4 +1,5 @@
 {
     "python.pythonPath": "/usr/bin/python3.6",
-    "python.formatting.provider": "autopep8"
+    "python.formatting.provider": "autopep8",
+    "vue3snippets.enable-compile-vue-file-on-did-save-code": true
 }

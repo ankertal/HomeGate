@@ -18,9 +18,10 @@ def on_close(ws, close_status_code, close_msg):
 
 
 def on_open(ws):
-    deployment = {'deployment': 'Tal', 'user': 'tal',  'password': '024365645'}
-    deployment_json = json.dumps(deployment)
-    ws.send(deployment_json)
+    gate = {'gate_name': 'Tal', 'email': 'talanker@gmail.com',
+            'password': '024365645'}
+    gate_json = json.dumps(gate)
+    ws.send(gate_json)
 
 
 if __name__ == "__main__":

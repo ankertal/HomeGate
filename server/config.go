@@ -3,27 +3,10 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io/ioutil"
-	"os"
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
 )
-
-type DeploymentUser struct {
-	Name     *string `json:"name,omitempty"`
-	Password *string `json:"password,omitempty"`
-}
-
-type DeploymentConfig struct {
-	Name  *string          `json:"name,omitempty"`
-	Users []DeploymentUser `json:"users"`
-}
-
-type DeploymentsConfig struct {
-	Deployments []DeploymentConfig `json:"deployments"`
-}
 
 // ServerConfig contains required params
 type ServerConfig struct {
@@ -94,31 +77,45 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	}
 }
 
-func (srv *HomeGateServer) setupDeployments() {
-	jsonFile, err := os.Open("/Users/yaronweinsberg/work/HomeGate/server/deployments.json")
-	if err != nil {
-		panic("Could not find a deployments file")
-	}
+func (srv *HomeGateServer) setupGates() {
+	connection := GetDatabase()
+	defer CloseDatabase(connection)
 
-	fmt.Println("Successfully Opened deployments.json")
-	defer jsonFile.Close()
+	var users []User
+	connection.Preload("Gates").Find(&users)
 
-	// read our opened jsonFile as a byte array.
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	var configDeployments DeploymentsConfig
-	json.Unmarshal(byteValue, &configDeployments)
+	// we initialize our gates in-memory state
+	srv.Lock()
+	defer srv.Unlock()
 
-	// we initialize our deployments 'button' states
-	for _, configDeployment := range configDeployments.Deployments {
-		var dep deployment
-		dep.name = configDeployment.Name
-		dep.users = make(map[string]*DeploymentUser)
+	gates := make(map[string]*userGate)
 
-		for _, user := range configDeployment.Users {
-			username := user.Name
-			password := user.Password
-			dep.users[*username] = &DeploymentUser{Name: username, Password: password}
+	// setup the gates when we start
+	// NOTE: this should probably be revisited to improve perf (user better DB schema etc...)
+	for _, u := range users {
+		g := &userGate{
+			name:    u.MyGateName,
+			users:   make(map[string]User),
+			rcState: make(chan KeyPressed),
 		}
-		srv.deployments[*dep.name] = &dep
+
+		// add this user to its own gate
+		g.addUser(u)
+
+		// keep it in the global gate map
+		gates[u.MyGateName] = g
 	}
+
+	// now since each user can be associated with multiple gates,
+	// we update the corresponding gates with the user
+	for _, u := range users {
+		for _, g := range u.Gates {
+			if aGate, ok := gates[g.Name]; ok {
+				// this gate is already registered, add this user to (ok to override)
+				aGate.addUser(u)
+			}
+		}
+	}
+
+	srv.gates = gates
 }

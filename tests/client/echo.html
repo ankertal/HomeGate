@@ -41,9 +41,9 @@
     function sendMsg() {
         var message = document.getElementById("myMessage").value;
         myWebSocket.send(JSON.stringify({
-            deployment: "Tal",
+            gate_name: "Tal",
             payload: message,
-            user: "tal",
+            emacs: "talanker@gmail.com",
             password: "024365645"
         }));
     }

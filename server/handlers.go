@@ -20,68 +20,42 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-type GateEvent struct {
-	Deployment *string `json:"deployment,omitempty"`
-	User       *string `json:"user,omitempty"`
-	Password   *string `json:"password,omitempty"`
-}
-
-type CloseEvent struct {
-	GateEvent
-}
-
-type StatusEvent struct {
-	GateEvent
-}
-
-type LearnEvent struct {
-	GateEvent
-}
-
-type TestEvent struct {
-	GateEvent
-}
-
-type SetEvent struct {
-	GateEvent
-}
-
 func (srv *HomeGateServer) times(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
 	params := mux.Vars(r)
-	deploymentName := params["deployment"]
-	dep, ok := srv.deployments[deploymentName]
+	gateName := params["gatename"]
+	g, ok := srv.gates[gateName]
 	if ok {
-		fmt.Fprintf(w, "Last Open for Deployment : %v --> %v\n", deploymentName, dep.lastOpen)
-		fmt.Fprintf(w, "Last Close for Deployment: %v --> %v\n", deploymentName, dep.lastClose)
+		fmt.Fprintf(w, "Last Open for Gate : %v --> %v\n", gateName, g.lastOpen)
+		fmt.Fprintf(w, "Last Close for Gate: %v --> %v\n", gateName, g.lastClose)
 	} else {
-		fmt.Fprintf(w, "Could not find a deployment: %v", deploymentName)
+		fmt.Fprintf(w, "Could not find a Gate: %v", gateName)
 	}
 }
 
-func (srv *HomeGateServer) checkGateRequestParams(w http.ResponseWriter, deploymentName, userName, password *string) (*deployment, error) {
-	if deploymentName == nil || userName == nil || password == nil {
+func (srv *HomeGateServer) checkGateRequestParams(w http.ResponseWriter, gateName, userEmail, password *string) (*userGate, error) {
+	if gateName == nil || userEmail == nil || password == nil {
 		http.Error(w, "Bad Request / missing parameter !!!", http.StatusBadRequest)
 		return nil, fmt.Errorf("handler: Open called, missing parmeters")
 	}
 
-	deployment, ok := srv.deployments[*deploymentName]
+	g, ok := srv.gates[*gateName]
 	if !ok {
-		http.Error(w, "Bad Request / deployment does not exist  !!!", http.StatusBadRequest)
-		return nil, fmt.Errorf("handler: unknown deployment: %v", *deploymentName)
+		http.Error(w, "Bad Request / gate does not exist  !!!", http.StatusBadRequest)
+		return nil, fmt.Errorf("handler: unknown gate: %v", *gateName)
 	} else {
-		user, ok := deployment.users[*userName]
+		user, ok := g.users[*userEmail]
 		if !ok {
 			http.Error(w, "Bad Request / user does not exist  !!!", http.StatusBadRequest)
-			return nil, fmt.Errorf("handler: deployment [ %v ], unknown user: %v", *deploymentName, userName)
+			return nil, fmt.Errorf("handler: gate [ %v ], unknown user: %v", *gateName, userEmail)
 		}
-		if *user.Password != *password {
+		if user.Password != *password {
 			http.Error(w, "Bad Request / user/pass mismatch  !!!", http.StatusBadRequest)
-			return nil, fmt.Errorf("handler: deployment [ %v ], user: %v, password mismatch", *deploymentName, userName)
+			return nil, fmt.Errorf("handler: gate [ %v ], user: %v, password mismatch", *gateName, userEmail)
 		} else {
-			return deployment, nil
+			return g, nil
 		}
 	}
 
@@ -100,24 +74,24 @@ func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	deployment, err := srv.checkGateRequestParams(w, openEvent.Deployment, openEvent.User, openEvent.Password)
+	g, err := srv.checkGateRequestParams(w, openEvent.GateName, openEvent.Email, openEvent.Password)
 	if err != nil {
 		log.Printf("%v", err)
 		return
 	}
 
-	if deployment.rcState == nil {
+	if g.rcState == nil {
 		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
 		return
 	}
 
 	select {
-	case deployment.rcState <- Open:
-		deployment.lastOpen = time.Now()
-		fmt.Fprintf(w, "%v's gate requested to OPEN Acknowledged!\n", *deployment.name)
+	case g.rcState <- Open:
+		g.lastOpen = time.Now()
+		fmt.Fprintf(w, "%v's gate requested to OPEN Acknowledged!\n", g.name)
 	default:
 		log.Printf("client does not read events...")
-		close(deployment.rcState)
+		close(g.rcState)
 	}
 
 }
@@ -136,24 +110,24 @@ func (srv *HomeGateServer) close(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	deployment, err := srv.checkGateRequestParams(w, closeEvent.Deployment, closeEvent.User, closeEvent.Password)
+	g, err := srv.checkGateRequestParams(w, closeEvent.GateName, closeEvent.Email, closeEvent.Password)
 	if err != nil {
 		log.Printf("%v", err)
 		return
 	}
 
-	if deployment.rcState == nil {
+	if g.rcState == nil {
 		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
 		return
 	}
 
 	select {
-	case deployment.rcState <- Close:
-		deployment.lastClose = time.Now()
-		fmt.Fprintf(w, "%v's gate requested to CLOSE Acknowledged!\n", *deployment.name)
+	case g.rcState <- Close:
+		g.lastClose = time.Now()
+		fmt.Fprintf(w, "%v's gate requested to CLOSE Acknowledged!\n", g.name)
 	default:
 		log.Printf("client does not read events...")
-		close(deployment.rcState)
+		close(g.rcState)
 	}
 
 }
@@ -172,26 +146,26 @@ func (srv *HomeGateServer) learnOpen(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	deployment, err := srv.checkGateRequestParams(w, learnEvent.Deployment, learnEvent.User, learnEvent.Password)
+	g, err := srv.checkGateRequestParams(w, learnEvent.GateName, learnEvent.Email, learnEvent.Password)
 	if err != nil {
 		log.Printf("%v", err)
 		return
 	}
 
-	if deployment.rcState == nil {
+	if g.rcState == nil {
 		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
 		return
 	}
 
 	select {
-	case deployment.rcState <- LearnOpen:
-		fmt.Fprintf(w, "%v's gate requested to LearnOpen Acknowledged!\n", *deployment.name)
+	case g.rcState <- LearnOpen:
+		fmt.Fprintf(w, "%v's gate requested to LearnOpen Acknowledged!\n", g.name)
 	default:
 		log.Printf("client does not read events...")
-		close(deployment.rcState)
+		close(g.rcState)
 	}
 
-	fmt.Fprintf(w, "%v's gate requested to LEARN Open button -  Acknowledged!\n", *deployment.name)
+	fmt.Fprintf(w, "%v's gate requested to LEARN Open button -  Acknowledged!\n", g.name)
 }
 
 func (srv *HomeGateServer) learnClose(w http.ResponseWriter, r *http.Request) {
@@ -208,26 +182,26 @@ func (srv *HomeGateServer) learnClose(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	deployment, err := srv.checkGateRequestParams(w, learnEvent.Deployment, learnEvent.User, learnEvent.Password)
+	g, err := srv.checkGateRequestParams(w, learnEvent.GateName, learnEvent.Email, learnEvent.Password)
 	if err != nil {
 		log.Printf("%v", err)
 		return
 	}
 
-	if deployment.rcState == nil {
+	if g.rcState == nil {
 		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
 		return
 	}
 
 	select {
-	case deployment.rcState <- LearnClose:
-		fmt.Fprintf(w, "%v's gate requested to LearnClose Acknowledged!\n", *deployment.name)
+	case g.rcState <- LearnClose:
+		fmt.Fprintf(w, "%v's gate requested to LearnClose Acknowledged!\n", g.name)
 	default:
 		log.Printf("client does not read events...")
-		close(deployment.rcState)
+		close(g.rcState)
 	}
 
-	fmt.Fprintf(w, "%v's gate requested to LEARN Close button -  Acknowledged!\n", *deployment.name)
+	fmt.Fprintf(w, "%v's gate requested to LEARN Close button -  Acknowledged!\n", g.name)
 }
 
 func (srv *HomeGateServer) testOpen(w http.ResponseWriter, r *http.Request) {
@@ -244,23 +218,23 @@ func (srv *HomeGateServer) testOpen(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	deployment, err := srv.checkGateRequestParams(w, testEvent.Deployment, testEvent.User, testEvent.Password)
+	g, err := srv.checkGateRequestParams(w, testEvent.GateName, testEvent.Email, testEvent.Password)
 	if err != nil {
 		log.Printf("%v", err)
 		return
 	}
 
-	if deployment.rcState == nil {
+	if g.rcState == nil {
 		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
 		return
 	}
 
 	select {
-	case deployment.rcState <- TestOpen:
-		fmt.Fprintf(w, "%v's gate requested to TestOpen Acknowledged!\n", *deployment.name)
+	case g.rcState <- TestOpen:
+		fmt.Fprintf(w, "%v's gate requested to TestOpen Acknowledged!\n", g.name)
 	default:
 		log.Printf("client does not read events...")
-		close(deployment.rcState)
+		close(g.rcState)
 	}
 }
 
@@ -278,23 +252,23 @@ func (srv *HomeGateServer) testClose(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	deployment, err := srv.checkGateRequestParams(w, testEvent.Deployment, testEvent.User, testEvent.Password)
+	g, err := srv.checkGateRequestParams(w, testEvent.GateName, testEvent.Email, testEvent.Password)
 	if err != nil {
 		log.Printf("%v", err)
 		return
 	}
 
-	if deployment.rcState == nil {
+	if g.rcState == nil {
 		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
 		return
 	}
 
 	select {
-	case deployment.rcState <- TestClose:
-		fmt.Fprintf(w, "%v's gate requested to TestClose Acknowledged!\n", *deployment.name)
+	case g.rcState <- TestClose:
+		fmt.Fprintf(w, "%v's gate requested to TestClose Acknowledged!\n", g.name)
 	default:
 		log.Printf("client does not read events...")
-		close(deployment.rcState)
+		close(g.rcState)
 	}
 }
 
@@ -312,23 +286,23 @@ func (srv *HomeGateServer) setOpen(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	deployment, err := srv.checkGateRequestParams(w, setEvent.Deployment, setEvent.User, setEvent.Password)
+	g, err := srv.checkGateRequestParams(w, setEvent.GateName, setEvent.Email, setEvent.Password)
 	if err != nil {
 		log.Printf("%v", err)
 		return
 	}
 
-	if deployment.rcState == nil {
+	if g.rcState == nil {
 		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
 		return
 	}
 
 	select {
-	case deployment.rcState <- SetOpen:
-		fmt.Fprintf(w, "%v's gate requested to SetOpen Acknowledged!\n", *deployment.name)
+	case g.rcState <- SetOpen:
+		fmt.Fprintf(w, "%v's gate requested to SetOpen Acknowledged!\n", g.name)
 	default:
 		log.Printf("client does not read events...")
-		close(deployment.rcState)
+		close(g.rcState)
 	}
 }
 
@@ -346,23 +320,23 @@ func (srv *HomeGateServer) setClose(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	deployment, err := srv.checkGateRequestParams(w, setEvent.Deployment, setEvent.User, setEvent.Password)
+	g, err := srv.checkGateRequestParams(w, setEvent.GateName, setEvent.Email, setEvent.Password)
 	if err != nil {
 		log.Printf("%v", err)
 		return
 	}
 
-	if deployment.rcState == nil {
+	if g.rcState == nil {
 		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
 		return
 	}
 
 	select {
-	case deployment.rcState <- SetClose:
-		fmt.Fprintf(w, "%v's gate requested to SetClose Acknowledged!\n", *deployment.name)
+	case g.rcState <- SetClose:
+		fmt.Fprintf(w, "%v's gate requested to SetClose Acknowledged!\n", g.name)
 	default:
 		log.Printf("client does not read events...")
-		close(deployment.rcState)
+		close(g.rcState)
 	}
 }
 
@@ -388,21 +362,21 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 	}
 
 	srv.Lock()
-	deployment, err := srv.checkGateRequestParams(w, statusEvent.Deployment, statusEvent.User, statusEvent.Password)
+	g, err := srv.checkGateRequestParams(w, statusEvent.GateName, statusEvent.Email, statusEvent.Password)
 	if err != nil {
-		http.Error(w, "Bad Request / invalid deployment", http.StatusBadRequest)
+		http.Error(w, "Bad Request / invalid gate", http.StatusBadRequest)
 		return
 	}
 
-	// create a new channel for the deployment
-	if deployment.rcState != nil {
-		close(deployment.rcState)
+	// create a new channel for this gate
+	if g.rcState != nil {
+		close(g.rcState)
 	}
 
-	deployment.rcState = make(chan KeyPressed, 1)
+	g.rcState = make(chan KeyPressed, 1)
 	srv.Unlock()
 
-	for rcEvent := range deployment.rcState {
+	for rcEvent := range g.rcState {
 		err = c.WriteMessage(mt, []byte(fmt.Sprintf("%v", rcEvent)))
 		if err != nil {
 			break
@@ -441,7 +415,9 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 
 	// allocate a unique gate identifier to the user
 	gateID, _ := sf.NextID()
-	user.Gates = []Gate{{Name: fmt.Sprintf("gate-%v", gateID)}}
+	myGate := Gate{Name: fmt.Sprintf("gate-%v", gateID)}
+	user.MyGateName = myGate.Name
+	user.Gates = []Gate{myGate}
 
 	//insert user details in database
 	connection.Create(&user)
@@ -513,6 +489,7 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 		UserName:    authUser.Name,
 		Email:       authUser.Email,
 		AccessToken: validToken,
+		MyGateName:  authUser.MyGateName,
 		Gates:       userGates,
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -558,8 +535,9 @@ func (srv *HomeGateServer) userIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userData := map[string]interface{}{
-		"name":  authUser.Name,
-		"gates": userGates,
+		"name":    authUser.Name,
+		"gates":   userGates,
+		"my_gate": authUser.MyGateName,
 	}
 
 	json.NewEncoder(w).Encode(userData)
