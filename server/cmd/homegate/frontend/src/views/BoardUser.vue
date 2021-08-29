@@ -38,21 +38,56 @@
             <div class="collapse navbar-collapse" id="navbarNav">
               <ul class="navbar-nav">
                 <li class="nav-item">
-                  <button @click="openGate(index)">Open</button>
+                  <b-button
+                    pill
+                    variant="outline-success"
+                    size="sm"
+                    @click="openGate(index)"
+                    >Open</b-button
+                  >
                 </li>
+                &nbsp;&nbsp;
                 <li class="nav-item">
-                  <button @click="closeGate(index)">Close</button>
+                  <b-button
+                    pill
+                    variant="outline-warning"
+                    size="sm"
+                    @click="closeGate(index)"
+                    >Close</b-button
+                  >
                 </li>
+                &nbsp;&nbsp;
                 <li class="nav-item active">
-                  <button @click="deleteGate(index)" :disabled="isMyGate(index)">
+                  <b-button
+                    pill
+                    variant="outline-danger"
+                    size="sm"
+                    @click="deleteGate(index)"
+                    :disabled="isMyGate(index)"
+                  >
                     Delete
-                  </button>
+                  </b-button>
                 </li>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;
                 <li v-if="isMyGate(index)" class="nav-item active">
-                  <button @click="addUser(index)">Add User</button>
-                  <input type="text" v-model="email" required />
+                  <b-button pill variant="outline-dark" size="sm" @click="addUser(index)"
+                    >Add User</b-button
+                  >
+                  <input
+                    class="text-left"
+                    size="sm"
+                    type="text"
+                    v-model="email"
+                    required
+                  />
                   <span v-if="msg.email">{{ msg.email }}</span>
+                  <!-- <div>
+                    <b-dropdown split text="Options" class="m-2">
+                      <b-dropdown-item @click="addGate()">Add User</b-dropdown-item>
+                      <b-dropdown-item>Another action</b-dropdown-item>
+                      <b-dropdown-item>Something else here...</b-dropdown-item>
+                    </b-dropdown>
+                  </div> -->
                 </li>
               </ul>
             </div>
@@ -128,8 +163,10 @@ export default {
   },
   methods: {
     addGate: function () {
-      this.content.gates.push(this.newGateText);
-      this.newGateText = "";
+      if (this.newGateText != "") {
+        this.content.gates.push(this.newGateText);
+        this.newGateText = "";
+      }
     },
     deleteGate(index) {
       const currentGate = this.content.gates[index];
