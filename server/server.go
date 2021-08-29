@@ -39,15 +39,11 @@ const (
 
 // userGate represents a user gate  (identified by the gate uuid name)
 type userGate struct {
-	name      string
-	users     map[string]User
-	rcState   chan KeyPressed
-	lastOpen  time.Time
-	lastClose time.Time
-}
-
-func (d *userGate) addUser(u User) {
-	d.users[u.Email] = u
+	name       string
+	userEmails map[string]bool
+	rcState    chan KeyPressed
+	lastOpen   time.Time
+	lastClose  time.Time
 }
 
 // HomeGateServer represents the webhook server

@@ -3,21 +3,23 @@ package server
 import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/lib/pq"
 )
 
 type User struct {
 	gorm.Model
-	Name       string `json:"username"`
-	Email      string `gorm:"unique" json:"email"`
-	Password   string `json:"password"`
-	Role       string `json:"role"`
-	MyGateName string `json:"my_gate"`
-	Gates      []Gate `json:"gates" gorm:"many2many:user_gates;"`
+	Name       string         `json:"username"`
+	Email      string         `gorm:"unique" json:"email"`
+	Password   string         `json:"password"`
+	Role       string         `json:"role"`
+	MyGateName string         `json:"my_gate"`
+	Gates      pq.StringArray `json:"gates" gorm:"type:text[]"`
 }
 
 type Gate struct {
 	gorm.Model
-	Name string `json:"name" gorm:"unique"`
+	Name       string         `json:"name" gorm:"unique"`
+	UserEmails pq.StringArray `json:"user_emails" gorm:"type:text[]"`
 }
 
 type Authentication struct {

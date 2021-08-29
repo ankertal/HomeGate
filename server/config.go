@@ -81,41 +81,28 @@ func (srv *HomeGateServer) setupGates() {
 	connection := GetDatabase()
 	defer CloseDatabase(connection)
 
-	var users []User
-	connection.Preload("Gates").Find(&users)
+	var gatesDB []Gate
+	connection.Table("gates").Find(&gatesDB)
 
 	// we initialize our gates in-memory state
 	srv.Lock()
 	defer srv.Unlock()
 
-	gates := make(map[string]*userGate)
-
 	// setup the gates when we start
 	// NOTE: this should probably be revisited to improve perf (user better DB schema etc...)
-	for _, u := range users {
+	for _, gDB := range gatesDB {
 		g := &userGate{
-			name:    u.MyGateName,
-			users:   make(map[string]User),
-			rcState: make(chan KeyPressed),
+			name:       gDB.Name,
+			userEmails: make(map[string]bool),
+			rcState:    make(chan KeyPressed),
 		}
 
-		// add this user to its own gate
-		g.addUser(u)
+		// keep the users emails in a map for quick access
+		for userEmail := range g.userEmails {
+			g.userEmails[userEmail] = true
+		}
 
 		// keep it in the global gate map
-		gates[u.MyGateName] = g
+		srv.gates[gDB.Name] = g
 	}
-
-	// now since each user can be associated with multiple gates,
-	// we update the corresponding gates with the user
-	for _, u := range users {
-		for _, g := range u.Gates {
-			if aGate, ok := gates[g.Name]; ok {
-				// this gate is already registered, add this user to (ok to override)
-				aGate.addUser(u)
-			}
-		}
-	}
-
-	srv.gates = gates
 }

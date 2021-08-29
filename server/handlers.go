@@ -46,19 +46,14 @@ func (srv *HomeGateServer) checkGateRequestParams(w http.ResponseWriter, gateNam
 		http.Error(w, "Bad Request / gate does not exist  !!!", http.StatusBadRequest)
 		return nil, fmt.Errorf("handler: unknown gate: %v", *gateName)
 	} else {
-		user, ok := g.users[*userEmail]
+		_, ok := g.userEmails[*userEmail]
 		if !ok {
 			http.Error(w, "Bad Request / user does not exist  !!!", http.StatusBadRequest)
 			return nil, fmt.Errorf("handler: gate [ %v ], unknown user: %v", *gateName, userEmail)
 		}
-		if user.Password != *password {
-			http.Error(w, "Bad Request / user/pass mismatch  !!!", http.StatusBadRequest)
-			return nil, fmt.Errorf("handler: gate [ %v ], user: %v, password mismatch", *gateName, userEmail)
-		} else {
-			return g, nil
-		}
-	}
 
+		return g, nil
+	}
 }
 
 func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
@@ -400,7 +395,7 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 	var dbuser User
 	connection.Where("email = ?", user.Email).First(&dbuser)
 
-	//check email is alredy registered or not
+	//check email is already registered or not
 	if dbuser.Email != "" {
 		var err Error
 		err = SetError(err, "Email already in use")
@@ -415,12 +410,23 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 
 	// allocate a unique gate identifier to the user
 	gateID, _ := sf.NextID()
-	myGate := Gate{Name: fmt.Sprintf("gate-%v", gateID)}
-	user.MyGateName = myGate.Name
-	user.Gates = []Gate{myGate}
+	myGate := Gate{Name: fmt.Sprintf("gate-%v", gateID), UserEmails: []string{user.Email}}
 
-	//insert user details in database
-	connection.Create(&user)
+	// insert gate details in database
+	res := connection.Create(&myGate)
+	if res.Error != nil {
+		fmt.Println(res.Error)
+	}
+
+	// add the user create gate (currently a single one)
+	user.MyGateName = myGate.Name
+	user.Gates = []string{user.MyGateName}
+
+	// insert user details in database
+	res = connection.Create(&user)
+	if res.Error != nil {
+		fmt.Println(res.Error)
+	}
 
 	// return the response with a welcome message
 	registerResponse := RegisterResponse{
@@ -478,11 +484,6 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userGates []string
-	for _, gate := range authUser.Gates {
-		userGates = append(userGates, gate.Name)
-	}
-
 	loginResponse := LoginResponse{
 		ID:          authUser.ID,
 		Message:     fmt.Sprintf("%v login OK", authUser.Name),
@@ -490,7 +491,7 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 		Email:       authUser.Email,
 		AccessToken: validToken,
 		MyGateName:  authUser.MyGateName,
-		Gates:       userGates,
+		Gates:       authUser.Gates,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(loginResponse)
@@ -520,7 +521,7 @@ func (srv *HomeGateServer) userIndex(w http.ResponseWriter, r *http.Request) {
 	defer CloseDatabase(connection)
 
 	var authUser User
-	connection.Preload("Gates").Where("email = 	?", userEmail).First(&authUser)
+	connection.Where("email = 	?", userEmail).First(&authUser)
 
 	if authUser.Email == "" {
 		var err Error
@@ -529,15 +530,20 @@ func (srv *HomeGateServer) userIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userGates []string
-	for _, gate := range authUser.Gates {
-		userGates = append(userGates, gate.Name)
+	var userGate Gate
+	connection.Where("name = 	?", authUser.MyGateName).First(&userGate)
+	if userGate.Name == "" {
+		var err Error
+		err = SetError(err, "user gate does not exists in database")
+		err.sendToClient(w, http.StatusBadRequest)
+		return
 	}
 
 	userData := map[string]interface{}{
 		"name":    authUser.Name,
-		"gates":   userGates,
+		"gates":   authUser.Gates,
 		"my_gate": authUser.MyGateName,
+		"users":   userGate.UserEmails,
 	}
 
 	json.NewEncoder(w).Encode(userData)

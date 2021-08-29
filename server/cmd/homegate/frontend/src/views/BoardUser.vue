@@ -48,9 +48,16 @@
                     Delete
                   </button>
                 </li>
-                <!-- <li class="nav-item">
-              <a class="nav-link disabled" href="#">Disabled</a>
-            </li> -->
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <li class="nav-item active">
+                  <button v-if="isMyGate(index)" @click="addUser(index)">Add User</button>
+                  <input
+                    v-if="isMyGate(index)"
+                    v-model="newUserText"
+                    id="new-user"
+                    placeholder="e.g. friend@gmail.com"
+                  />
+                </li>
               </ul>
             </div>
           </nav>
@@ -66,6 +73,14 @@
         </form>
       </div>
     </div>
+
+    <br /><br /><br />
+    <strong>My ({{ currentUser.my_gate }}) friends: </strong>
+    <ul id="uses-list">
+      <li v-for="(item, index) in this.content.users">
+        {{ item }}
+      </li>
+    </ul>
   </div>
 </template>
 
@@ -85,6 +100,7 @@ export default {
       message: "Hello Vue!",
       successful: false,
       newGateText: "",
+      newUserText: "",
     };
   },
   mounted() {
@@ -110,15 +126,21 @@ export default {
     },
     deleteGate(index) {
       const currentGate = this.content.gates[index];
-      const myGate = this.content.my_gate;
-      if (currentGate.trim() != myGate.trim()) {
+      const myGate = this.content.user_gate;
+      console.log(currentGate);
+      console.log(myGate);
+      if (currentGate != myGate) {
         this.content.gates.splice(index, 1);
       }
     },
     isMyGate(index) {
       const currentGate = this.content.gates[index];
       const myGate = this.content.my_gate;
-      return currentGate.trim() === myGate.trim();
+      return currentGate === myGate;
+    },
+    addUser: function () {
+      this.content.users.push(this.newUserText);
+      this.newUserText = "";
     },
   },
 };
