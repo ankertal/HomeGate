@@ -49,14 +49,10 @@
                   </button>
                 </li>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <li class="nav-item active">
-                  <button v-if="isMyGate(index)" @click="addUser(index)">Add User</button>
-                  <input
-                    v-if="isMyGate(index)"
-                    v-model="newUserText"
-                    id="new-user"
-                    placeholder="e.g. friend@gmail.com"
-                  />
+                <li v-if="isMyGate(index)" class="nav-item active">
+                  <button @click="addUser(index)">Add User</button>
+                  <input type="text" v-model="email" required />
+                  <span v-if="msg.email">{{ msg.email }}</span>
                 </li>
               </ul>
             </div>
@@ -103,7 +99,16 @@ export default {
       successful: false,
       newGateText: "",
       newUserText: "",
+      msg: [],
+      email: "",
     };
+  },
+  watch: {
+    email(value) {
+      // binding this to the data value in the email input
+      this.email = value;
+      this.validateEmail(value);
+    },
   },
   mounted() {
     UserService.getUserBoard().then(
@@ -141,8 +146,17 @@ export default {
       return currentGate === myGate;
     },
     addUser: function () {
-      this.content.users.push(this.newUserText);
-      this.newUserText = "";
+      if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(this.email)) {
+        this.content.users.push(this.email);
+        this.newUserText = "";
+      }
+    },
+    validateEmail(value) {
+      if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(value)) {
+        this.msg["email"] = "";
+      } else {
+        this.msg["email"] = "Invalid Email Address";
+      }
     },
   },
 };
