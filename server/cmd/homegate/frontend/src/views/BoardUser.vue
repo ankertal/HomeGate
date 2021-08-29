@@ -20,15 +20,33 @@
       <ul>
         <li v-for="(gate, index) in content.gates" :key="index">{{ gate }}</li>
       </ul>
-      <div id="counter">Counter: {{ counter }}</div>
-      <div id="two-way-binding">
-        <p>{{ message }}</p>
-        <input v-model="message" />
+
+      <div id="add-gate">
+        <button v-on:click="addGate">Add Gate</button>
       </div>
-      <div id="event-handling">
-        <p>{{ message }}</p>
-        <button v-on:click="reverseMessage">Reverse Message</button>
-      </div>
+
+      <table class="gates">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Owner</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in content.gates" :key="item">
+            <td>{{ item }}</td>
+            <td>
+                <span v-if="item== content.my_gate"><font-awesome-icon icon="check" /></span>
+                <span v-else><font-awesome-icon icon="times" /></span>
+              </span>
+            </td>
+            <td>
+              <button class="btn add">Add</button>
+              <button class="btn edit">Edit</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
@@ -46,7 +64,6 @@ export default {
   data() {
     return {
       content: "",
-      counter: 0,
       message: "Hello Vue!",
       successful: false,
     };
@@ -65,14 +82,10 @@ export default {
           error.toString();
       }
     );
-
-    setInterval(() => {
-      this.counter++;
-    }, 1000);
   },
   methods: {
-    reverseMessage() {
-      this.message = this.message.split("").reverse().join("");
+    addGate() {
+      this.content.gates.push("yaron-gate");
     },
   },
 };
