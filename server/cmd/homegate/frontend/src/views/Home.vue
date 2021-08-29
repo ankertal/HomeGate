@@ -1,7 +1,19 @@
 <template>
   <div class="container">
     <header class="jumbotron">
-      <h3>{{ content }}</h3>
+      <div v-if="!successful">
+        <h3>HomeGate:</h3>
+        <h4
+          v-if="content"
+          class="alert"
+          :class="successful ? 'alert-success' : 'alert-danger'"
+        >
+          {{ content }}
+        </h4>
+      </div>
+      <div v-if="successful">
+        <h3>{{ content }}</h3>
+      </div>
     </header>
     <h5>Created by:</h5>
     <br />
@@ -40,14 +52,17 @@ export default {
   data() {
     return {
       content: "",
+      successful: false,
     };
   },
   mounted() {
     UserService.getPublicContent().then(
       (response) => {
         this.content = response.data;
+        this.successful = true;
       },
       (error) => {
+        this.successful = false;
         this.content =
           (error.response && error.response.data && error.response.data.message) ||
           error.message ||
