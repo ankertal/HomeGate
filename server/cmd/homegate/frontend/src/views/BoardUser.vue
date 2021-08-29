@@ -18,35 +18,48 @@
     <div v-if="successful">
       <strong>Gates:</strong>
       <ul>
-        <li v-for="(gate, index) in content.gates" :key="index">{{ gate }}</li>
+        <li v-for="(gate, index) in content.gates" :key="index">
+          <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="#">{{ gate }}</a>
+            <button
+              class="navbar-toggler"
+              type="button"
+              data-toggle="collapse"
+              data-target="#navbarNav"
+              aria-controls="navbarNav"
+              aria-expanded="false"
+              aria-label="Toggle navigation"
+            >
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav">
+                <li class="nav-item">
+                  <button @click="openGate(index)">Open</button>
+                </li>
+                <li class="nav-item">
+                  <button @click="closeGate(index)">Close</button>
+                </li>
+                <li class="nav-item active">
+                  <button @click="deleteGate(index)">Delete</button>
+                </li>
+                <!-- <li class="nav-item">
+              <a class="nav-link disabled" href="#">Disabled</a>
+            </li> -->
+              </ul>
+            </div>
+          </nav>
+        </li>
       </ul>
 
-      <div id="add-gate">
-        <button v-on:click="addGate">Add Gate</button>
+      <div id="gate-list">
+        <form v-on:submit.prevent="addGate">
+          <label for="new-gate">Add a gate to {{ currentUser.username }}: </label>
+          &nbsp;&nbsp;
+          <input v-model="newGateText" id="new-gate" placeholder="e.g. gate-XXXXXX" />
+          <button>Add</button>
+        </form>
       </div>
-
-      <table class="gates">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Owner</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in content.gates" :key="item">
-            <td>{{ item }}</td>
-            <td>
-                <span v-if="item== content.my_gate"><font-awesome-icon icon="check" /></span>
-                <span v-else><font-awesome-icon icon="times" /></span>
-              </span>
-            </td>
-            <td>
-              <button class="btn add">Add</button>
-              <button class="btn edit">Edit</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </template>
@@ -66,6 +79,7 @@ export default {
       content: "",
       message: "Hello Vue!",
       successful: false,
+      newGateText: "",
     };
   },
   mounted() {
@@ -73,6 +87,7 @@ export default {
       (response) => {
         this.content = response.data;
         this.successful = true;
+        this.items = this.content.gates;
       },
       (error) => {
         this.successful = false;
@@ -84,8 +99,18 @@ export default {
     );
   },
   methods: {
-    addGate() {
-      this.content.gates.push("yaron-gate");
+    addGate: function () {
+      this.content.gates.push(this.newGateText);
+      this.newGateText = "";
+    },
+    deleteGate(index) {
+      const currentGate = this.content.gates[index];
+      const myGate = this.content.my_gate;
+      if (currentGate.trim() === myGate.trim()) {
+        console.log("Success");
+      } else {
+        this.content.gates.splice(index, 1);
+      }
     },
   },
 };
