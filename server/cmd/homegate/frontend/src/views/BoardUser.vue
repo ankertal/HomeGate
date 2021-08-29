@@ -75,12 +75,14 @@
     </div>
 
     <br /><br /><br />
-    <strong>My ({{ currentUser.my_gate }}) friends: </strong>
-    <ul id="uses-list">
-      <li v-for="(item, index) in this.content.users">
-        {{ item }}
-      </li>
-    </ul>
+    <div v-if="successful">
+      <strong>My ({{ currentUser.my_gate }}) friends: </strong>
+      <ul id="uses-list">
+        <li v-for="(item, index) in this.content.users">
+          {{ item }}
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
