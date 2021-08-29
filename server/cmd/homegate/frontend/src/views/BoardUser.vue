@@ -20,7 +20,10 @@
       <ul>
         <li v-for="(gate, index) in content.gates" :key="index">
           <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="#">{{ gate }}</a>
+            <a class="navbar-brand" href="#"
+              ><span v-if="isMyGate(index)" style="color: red">{{ gate }}</span>
+              <span v-if="!isMyGate(index)" style="color: blue">{{ gate }}</span></a
+            >
             <button
               class="navbar-toggler"
               type="button"
@@ -41,7 +44,9 @@
                   <button @click="closeGate(index)">Close</button>
                 </li>
                 <li class="nav-item active">
-                  <button @click="deleteGate(index)">Delete</button>
+                  <button @click="deleteGate(index)" :disabled="isMyGate(index)">
+                    Delete
+                  </button>
                 </li>
                 <!-- <li class="nav-item">
               <a class="nav-link disabled" href="#">Disabled</a>
@@ -106,11 +111,14 @@ export default {
     deleteGate(index) {
       const currentGate = this.content.gates[index];
       const myGate = this.content.my_gate;
-      if (currentGate.trim() === myGate.trim()) {
-        console.log("Success");
-      } else {
+      if (currentGate.trim() != myGate.trim()) {
         this.content.gates.splice(index, 1);
       }
+    },
+    isMyGate(index) {
+      const currentGate = this.content.gates[index];
+      const myGate = this.content.my_gate;
+      return currentGate.trim() === myGate.trim();
     },
   },
 };
