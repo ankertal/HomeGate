@@ -5,18 +5,30 @@
         HomeGate's <strong>{{ currentUser.username }}</strong> Settings:
       </h3>
     </header>
-    <strong>Gates:</strong>
-    <ul>
-      <li v-for="(gate, index) in content.gates" :key="index">{{ gate }}</li>
-    </ul>
-    <div id="counter">Counter: {{ counter }}</div>
-    <div id="two-way-binding">
-      <p>{{ message }}</p>
-      <input v-model="message" />
+    <div v-if="!successful">
+      <div
+        v-if="content"
+        class="alert"
+        :class="successful ? 'alert-success' : 'alert-danger'"
+      >
+        {{ content }}
+      </div>
     </div>
-    <div id="event-handling">
-      <p>{{ message }}</p>
-      <button v-on:click="reverseMessage">Reverse Message</button>
+
+    <div v-if="successful">
+      <strong>Gates:</strong>
+      <ul>
+        <li v-for="(gate, index) in content.gates" :key="index">{{ gate }}</li>
+      </ul>
+      <div id="counter">Counter: {{ counter }}</div>
+      <div id="two-way-binding">
+        <p>{{ message }}</p>
+        <input v-model="message" />
+      </div>
+      <div id="event-handling">
+        <p>{{ message }}</p>
+        <button v-on:click="reverseMessage">Reverse Message</button>
+      </div>
     </div>
   </div>
 </template>
@@ -36,14 +48,17 @@ export default {
       content: "",
       counter: 0,
       message: "Hello Vue!",
+      successful: false,
     };
   },
   mounted() {
     UserService.getUserBoard().then(
       (response) => {
         this.content = response.data;
+        this.successful = true;
       },
       (error) => {
+        this.successful = false;
         this.content =
           (error.response && error.response.data && error.response.data.message) ||
           error.message ||
