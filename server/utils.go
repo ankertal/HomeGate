@@ -46,7 +46,7 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-//Generate JWT token
+// Generate JWT token
 func GenerateJWT(email, role string) (string, error) {
 	var mySigningKey = []byte(os.Getenv("HOMEGATE_JWT_SECRET_KEY"))
 	token := jwt.New(jwt.SigningMethodHS256)
