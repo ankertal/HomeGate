@@ -141,18 +141,39 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var evt GateEvent
-	err = json.Unmarshal([]byte(message), &evt)
+	var streamRequest DeviceStreamRequest
+	err = json.Unmarshal([]byte(message), &streamRequest)
 	if err != nil {
 		var err Error
-		err = SetError(err, "Bad Request post message !!!")
+		err = SetError(err, "Bad Request post message, expected DeviceStreamRequest type !!!")
 		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
 
-	if evt.GateName == nil {
+	if streamRequest.GateName == nil {
 		var err Error
 		err = SetError(err, "stream: missing gate name parmeter")
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	connection := GetDatabase()
+	defer CloseDatabase(connection)
+
+	var authUser User
+	connection.Where("email = 	?", streamRequest.Email).First(&authUser)
+
+	if authUser.Email == "" {
+		var err Error
+		err = SetError(err, "Username or Password is incorrect")
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	check := CheckPasswordHash(streamRequest.Password, authUser.Password)
+	if !check {
+		var err Error
+		err = SetError(err, "Username or Password is incorrect")
 		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
@@ -160,10 +181,10 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 	// lock the server as we set up the map
 	srv.Lock()
 
-	g, ok := srv.gates[*evt.GateName]
+	g, ok := srv.gates[*streamRequest.GateName]
 	if !ok {
 		var err Error
-		err = SetError(err, fmt.Sprintf("stream: unknown gate: %v", evt.GateName))
+		err = SetError(err, fmt.Sprintf("stream: unknown gate: %v", streamRequest.GateName))
 		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}

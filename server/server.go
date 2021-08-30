@@ -88,7 +88,7 @@ func NewServer(config *ServerConfig) *HomeGateServer {
 
 func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 	r.HandleFunc("/command", IsAuthorized(srv.command)).Methods("POST")
-	r.HandleFunc("/stream", IsAuthorized(srv.stream)).Methods("GET")
+	r.HandleFunc("/stream", srv.stream).Methods("GET")
 
 	// We will setup our server so we can serve static assest like images, css from the /static/{file} route
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))

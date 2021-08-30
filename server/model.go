@@ -65,3 +65,9 @@ type GateEvent struct {
 	IsSetOpen    *bool   `json:"is_set_open,omitempty"`
 	IsSetClose   *bool   `json:"is_set_close,omitempty"`
 }
+
+// DeviceStreamRequest is the request send from the gate controller (pi) to the stream endpoint
+type DeviceStreamRequest struct {
+	GateEvent
+	Authentication
+}
