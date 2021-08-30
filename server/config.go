@@ -94,11 +94,11 @@ func (srv *HomeGateServer) setupGates() {
 		g := &userGate{
 			name:       gDB.Name,
 			userEmails: make(map[string]bool),
-			rcState:    make(chan KeyPressed),
+			rcState:    nil,
 		}
 
 		// keep the users emails in a map for quick access
-		for userEmail := range g.userEmails {
+		for _, userEmail := range gDB.UserEmails {
 			g.userEmails[userEmail] = true
 		}
 

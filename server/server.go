@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -42,8 +41,6 @@ type userGate struct {
 	name       string
 	userEmails map[string]bool
 	rcState    chan KeyPressed
-	lastOpen   time.Time
-	lastClose  time.Time
 }
 
 // HomeGateServer represents the webhook server
@@ -90,16 +87,8 @@ func NewServer(config *ServerConfig) *HomeGateServer {
 }
 
 func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
-	r.HandleFunc("/times/{gatename}", srv.times).Methods("GET")
-	r.HandleFunc("/open", srv.open).Methods("POST")
-	r.HandleFunc("/close", srv.close).Methods("POST")
-	r.HandleFunc("/learn-open", srv.learnOpen).Methods("POST")
-	r.HandleFunc("/learn-close", srv.learnClose).Methods("POST")
-	r.HandleFunc("/test-open", srv.testOpen).Methods("POST")
-	r.HandleFunc("/test-close", srv.testClose).Methods("POST")
-	r.HandleFunc("/set-open", srv.setOpen).Methods("POST")
-	r.HandleFunc("/set-close", srv.setClose).Methods("POST")
-	r.HandleFunc("/stream", srv.stream).Methods("GET")
+	r.HandleFunc("/command", IsAuthorized(srv.command)).Methods("POST")
+	r.HandleFunc("/stream", IsAuthorized(srv.stream)).Methods("GET")
 
 	// We will setup our server so we can serve static assest like images, css from the /static/{file} route
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))

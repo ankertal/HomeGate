@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
@@ -20,319 +18,103 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func (srv *HomeGateServer) times(w http.ResponseWriter, r *http.Request) {
+func (srv *HomeGateServer) checkGateRequestParams(w http.ResponseWriter, r *http.Request) (*userGate, *GateEvent, error) {
+	w.Header().Set("Content-Type", "application/json")
+
+	dumpRequest(r)
+
+	// get the email from the token
+	userEmail := r.Header.Get("Email")
+	if userEmail == "" {
+		var err Error
+		err = SetError(err, "Failed to get user email from token")
+		err.sendToClient(w, http.StatusBadRequest)
+		return nil, nil, fmt.Errorf(err.Message)
+	}
+
+	var evt GateEvent
+	err := json.NewDecoder(r.Body).Decode(&evt)
+	if err != nil {
+		var err Error
+		err = SetError(err, "checkGateRequestParams: failed to decode post message")
+		err.sendToClient(w, http.StatusBadRequest)
+		return nil, nil, fmt.Errorf(err.Message)
+	}
+
+	if evt.GateName == nil {
+		return nil, nil, fmt.Errorf("checkGateRequestParams: missing gate name parmeter")
+	}
+
+	g, ok := srv.gates[*evt.GateName]
+	if !ok {
+		return nil, nil, fmt.Errorf("handler: unknown gate: %v", *evt.GateName)
+	}
+
+	if _, userAllowed := g.userEmails[userEmail]; !userAllowed {
+		return nil, nil, fmt.Errorf("handler: user: %v, does not has access to gate: %v", userEmail, *evt.GateName)
+	}
+
+	return g, &evt, nil
+}
+
+func (srv *HomeGateServer) triggerGateCommand(w http.ResponseWriter, r *http.Request) (*GateEvent, error) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	params := mux.Vars(r)
-	gateName := params["gatename"]
-	g, ok := srv.gates[gateName]
-	if ok {
-		fmt.Fprintf(w, "Last Open for Gate : %v --> %v\n", gateName, g.lastOpen)
-		fmt.Fprintf(w, "Last Close for Gate: %v --> %v\n", gateName, g.lastClose)
-	} else {
-		fmt.Fprintf(w, "Could not find a Gate: %v", gateName)
-	}
-}
-
-func (srv *HomeGateServer) checkGateRequestParams(w http.ResponseWriter, gateName, userEmail, password *string) (*userGate, error) {
-	if gateName == nil || userEmail == nil || password == nil {
-		http.Error(w, "Bad Request / missing parameter !!!", http.StatusBadRequest)
-		return nil, fmt.Errorf("handler: Open called, missing parmeters")
+	g, evt, err := srv.checkGateRequestParams(w, r)
+	if err != nil {
+		var err2 Error
+		err2 = SetError(err2, err.Error())
+		err2.sendToClient(w, http.StatusBadRequest)
+		return nil, fmt.Errorf(err2.Message)
 	}
 
-	g, ok := srv.gates[*gateName]
-	if !ok {
-		http.Error(w, "Bad Request / gate does not exist  !!!", http.StatusBadRequest)
-		return nil, fmt.Errorf("handler: unknown gate: %v", *gateName)
-	} else {
-		_, ok := g.userEmails[*userEmail]
-		if !ok {
-			http.Error(w, "Bad Request / user does not exist  !!!", http.StatusBadRequest)
-			return nil, fmt.Errorf("handler: gate [ %v ], unknown user: %v", *gateName, userEmail)
+	if g.rcState == nil {
+		var err Error
+		err = SetError(err, "Bad Request gate device has not been connected yet !!!")
+		err.sendToClient(w, http.StatusBadRequest)
+		return nil, fmt.Errorf(err.Message)
+	}
+
+	var key KeyPressed
+	if evt.IsOpen != nil {
+		key = Open
+	} else if evt.IsClose != nil {
+		key = Close
+	} else if evt.IsLearnOpen != nil {
+		key = LearnOpen
+	} else if evt.IsLearnClose != nil {
+		key = LearnClose
+	} else if evt.IsTestOpen != nil {
+		key = TestOpen
+	} else if evt.IsTestClose != nil {
+		key = TestClose
+	} else if evt.IsSetOpen != nil {
+		key = SetOpen
+	} else if evt.IsSetClose != nil {
+		key = SetClose
+	}
+
+	select {
+	case g.rcState <- key:
+		openResponse := map[string]interface{}{
+			"gate_name": g.name,
+			"status":    "success",
+			"message":   fmt.Sprintf("%v's gate command: %v, Acknowledged!", key, g.name),
 		}
 
-		return g, nil
-	}
-}
+		json.NewEncoder(w).Encode(openResponse)
+		return evt, nil
 
-func (srv *HomeGateServer) open(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var openEvent GateEvent
-	err := json.NewDecoder(r.Body).Decode(&openEvent)
-	if err != nil {
-		log.Printf("handler: failed to decode the openEvent message: %v", err.Error())
-		http.Error(w, "Bad Request / data is not openEvent !!!", http.StatusBadRequest)
-		return
-	}
-
-	srv.Lock()
-	defer srv.Unlock()
-
-	g, err := srv.checkGateRequestParams(w, openEvent.GateName, openEvent.Email, openEvent.Password)
-	if err != nil {
-		log.Printf("%v", err)
-		return
-	}
-
-	if g.rcState == nil {
-		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
-		return
-	}
-
-	select {
-	case g.rcState <- Open:
-		g.lastOpen = time.Now()
-		fmt.Fprintf(w, "%v's gate requested to OPEN Acknowledged!\n", g.name)
 	default:
 		log.Printf("client does not read events...")
 		close(g.rcState)
-	}
-
-}
-
-func (srv *HomeGateServer) close(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "application/json")
-	var closeEvent CloseEvent
-	err := json.NewDecoder(r.Body).Decode(&closeEvent)
-	if err != nil {
-		log.Printf("handler: failed to decode the closeEvent message: %v", err.Error())
-		http.Error(w, "Bad Request / data is not closeEvent !!!", http.StatusBadRequest)
-		return
-	}
-
-	srv.Lock()
-	defer srv.Unlock()
-
-	g, err := srv.checkGateRequestParams(w, closeEvent.GateName, closeEvent.Email, closeEvent.Password)
-	if err != nil {
-		log.Printf("%v", err)
-		return
-	}
-
-	if g.rcState == nil {
-		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
-		return
-	}
-
-	select {
-	case g.rcState <- Close:
-		g.lastClose = time.Now()
-		fmt.Fprintf(w, "%v's gate requested to CLOSE Acknowledged!\n", g.name)
-	default:
-		log.Printf("client does not read events...")
-		close(g.rcState)
-	}
-
-}
-
-func (srv *HomeGateServer) learnOpen(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "application/json")
-	var learnEvent LearnEvent
-	err := json.NewDecoder(r.Body).Decode(&learnEvent)
-	if err != nil {
-		log.Printf("handler: failed to decode the learnEvent message: %v", err.Error())
-		http.Error(w, "Bad Request / data is not learnEvent !!!", http.StatusBadRequest)
-		return
-	}
-
-	srv.Lock()
-	defer srv.Unlock()
-
-	g, err := srv.checkGateRequestParams(w, learnEvent.GateName, learnEvent.Email, learnEvent.Password)
-	if err != nil {
-		log.Printf("%v", err)
-		return
-	}
-
-	if g.rcState == nil {
-		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
-		return
-	}
-
-	select {
-	case g.rcState <- LearnOpen:
-		fmt.Fprintf(w, "%v's gate requested to LearnOpen Acknowledged!\n", g.name)
-	default:
-		log.Printf("client does not read events...")
-		close(g.rcState)
-	}
-
-	fmt.Fprintf(w, "%v's gate requested to LEARN Open button -  Acknowledged!\n", g.name)
-}
-
-func (srv *HomeGateServer) learnClose(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "application/json")
-	var learnEvent LearnEvent
-	err := json.NewDecoder(r.Body).Decode(&learnEvent)
-	if err != nil {
-		log.Printf("handler: failed to decode the learnEvent message: %v", err.Error())
-		http.Error(w, "Bad Request / data is not learnEvent !!!", http.StatusBadRequest)
-		return
-	}
-
-	srv.Lock()
-	defer srv.Unlock()
-
-	g, err := srv.checkGateRequestParams(w, learnEvent.GateName, learnEvent.Email, learnEvent.Password)
-	if err != nil {
-		log.Printf("%v", err)
-		return
-	}
-
-	if g.rcState == nil {
-		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
-		return
-	}
-
-	select {
-	case g.rcState <- LearnClose:
-		fmt.Fprintf(w, "%v's gate requested to LearnClose Acknowledged!\n", g.name)
-	default:
-		log.Printf("client does not read events...")
-		close(g.rcState)
-	}
-
-	fmt.Fprintf(w, "%v's gate requested to LEARN Close button -  Acknowledged!\n", g.name)
-}
-
-func (srv *HomeGateServer) testOpen(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "application/json")
-	var testEvent TestEvent
-	err := json.NewDecoder(r.Body).Decode(&testEvent)
-	if err != nil {
-		log.Printf("handler: failed to decode the testEvent message: %v", err.Error())
-		http.Error(w, "Bad Request / data is not testEvent !!!", http.StatusBadRequest)
-		return
-	}
-
-	srv.Lock()
-	defer srv.Unlock()
-
-	g, err := srv.checkGateRequestParams(w, testEvent.GateName, testEvent.Email, testEvent.Password)
-	if err != nil {
-		log.Printf("%v", err)
-		return
-	}
-
-	if g.rcState == nil {
-		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
-		return
-	}
-
-	select {
-	case g.rcState <- TestOpen:
-		fmt.Fprintf(w, "%v's gate requested to TestOpen Acknowledged!\n", g.name)
-	default:
-		log.Printf("client does not read events...")
-		close(g.rcState)
+		return nil, fmt.Errorf("client does not read events, closing stream")
 	}
 }
 
-func (srv *HomeGateServer) testClose(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "application/json")
-	var testEvent TestEvent
-	err := json.NewDecoder(r.Body).Decode(&testEvent)
-	if err != nil {
-		log.Printf("handler: failed to decode the testEvent message: %v", err.Error())
-		http.Error(w, "Bad Request / data is not testEvent !!!", http.StatusBadRequest)
-		return
-	}
-
-	srv.Lock()
-	defer srv.Unlock()
-
-	g, err := srv.checkGateRequestParams(w, testEvent.GateName, testEvent.Email, testEvent.Password)
-	if err != nil {
-		log.Printf("%v", err)
-		return
-	}
-
-	if g.rcState == nil {
-		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
-		return
-	}
-
-	select {
-	case g.rcState <- TestClose:
-		fmt.Fprintf(w, "%v's gate requested to TestClose Acknowledged!\n", g.name)
-	default:
-		log.Printf("client does not read events...")
-		close(g.rcState)
-	}
-}
-
-func (srv *HomeGateServer) setOpen(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "application/json")
-	var setEvent SetEvent
-	err := json.NewDecoder(r.Body).Decode(&setEvent)
-	if err != nil {
-		log.Printf("handler: failed to decode the setEvent message: %v", err.Error())
-		http.Error(w, "Bad Request / data is not testEvent !!!", http.StatusBadRequest)
-		return
-	}
-
-	srv.Lock()
-	defer srv.Unlock()
-
-	g, err := srv.checkGateRequestParams(w, setEvent.GateName, setEvent.Email, setEvent.Password)
-	if err != nil {
-		log.Printf("%v", err)
-		return
-	}
-
-	if g.rcState == nil {
-		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
-		return
-	}
-
-	select {
-	case g.rcState <- SetOpen:
-		fmt.Fprintf(w, "%v's gate requested to SetOpen Acknowledged!\n", g.name)
-	default:
-		log.Printf("client does not read events...")
-		close(g.rcState)
-	}
-}
-
-func (srv *HomeGateServer) setClose(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "application/json")
-	var setEvent SetEvent
-	err := json.NewDecoder(r.Body).Decode(&setEvent)
-	if err != nil {
-		log.Printf("handler: failed to decode the setEvent message: %v", err.Error())
-		http.Error(w, "Bad Request / data is not testEvent !!!", http.StatusBadRequest)
-		return
-	}
-
-	srv.Lock()
-	defer srv.Unlock()
-
-	g, err := srv.checkGateRequestParams(w, setEvent.GateName, setEvent.Email, setEvent.Password)
-	if err != nil {
-		log.Printf("%v", err)
-		return
-	}
-
-	if g.rcState == nil {
-		http.Error(w, "Bad Request gate device haven't connected yet !!!", http.StatusBadRequest)
-		return
-	}
-
-	select {
-	case g.rcState <- SetClose:
-		fmt.Fprintf(w, "%v's gate requested to SetClose Acknowledged!\n", g.name)
-	default:
-		log.Printf("client does not read events...")
-		close(g.rcState)
-	}
+func (srv *HomeGateServer) command(w http.ResponseWriter, r *http.Request) {
+	srv.triggerGateCommand(w, r)
 }
 
 func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
@@ -346,20 +128,36 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 	// validate user
 	mt, message, err := c.ReadMessage()
 	if err != nil {
-		http.Error(w, "Bad Request / data is not StatusEvent !!!", http.StatusBadRequest)
-		return
-	}
-	var statusEvent StatusEvent
-	err = json.Unmarshal([]byte(message), &statusEvent)
-	if err != nil {
-		http.Error(w, "Bad Request / data is not StatusEvent !!!", http.StatusBadRequest)
+		var err Error
+		err = SetError(err, "Bad Request / data is not a gate event !!!")
+		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
 
-	srv.Lock()
-	g, err := srv.checkGateRequestParams(w, statusEvent.GateName, statusEvent.Email, statusEvent.Password)
+	var evt GateEvent
+	err = json.Unmarshal([]byte(message), &evt)
 	if err != nil {
-		http.Error(w, "Bad Request / invalid gate", http.StatusBadRequest)
+		var err Error
+		err = SetError(err, "Bad Request post message !!!")
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	if evt.GateName == nil {
+		var err Error
+		err = SetError(err, "stream: missing gate name parmeter")
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	// lock the server as we set up the map
+	srv.Lock()
+
+	g, ok := srv.gates[*evt.GateName]
+	if !ok {
+		var err Error
+		err = SetError(err, fmt.Sprintf("stream: unknown gate: %v", evt.GateName))
+		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
 
@@ -369,6 +167,8 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 	}
 
 	g.rcState = make(chan KeyPressed, 1)
+
+	// unlock the server now, hold a copy of the channel
 	srv.Unlock()
 
 	for rcEvent := range g.rcState {
@@ -530,9 +330,9 @@ func (srv *HomeGateServer) userIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userGate Gate
-	connection.Where("name = 	?", authUser.MyGateName).First(&userGate)
-	if userGate.Name == "" {
+	var uGate Gate
+	connection.Where("name = 	?", authUser.MyGateName).First(&uGate)
+	if uGate.Name == "" {
 		var err Error
 		err = SetError(err, "user gate does not exists in database")
 		err.sendToClient(w, http.StatusBadRequest)
@@ -543,7 +343,7 @@ func (srv *HomeGateServer) userIndex(w http.ResponseWriter, r *http.Request) {
 		"name":    authUser.Name,
 		"gates":   authUser.Gates,
 		"my_gate": authUser.MyGateName,
-		"users":   userGate.UserEmails,
+		"users":   uGate.UserEmails,
 	}
 
 	json.NewEncoder(w).Encode(userData)

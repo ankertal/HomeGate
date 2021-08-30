@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"time"
 
@@ -63,4 +64,14 @@ func GenerateJWT(email, role string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+func dumpRequest(r *http.Request) {
+	// Save a copy of this request for debugging.
+	requestDump, err := httputil.DumpRequest(r, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(string(requestDump))
 }

@@ -114,6 +114,10 @@
         </li>
       </ul>
     </div>
+
+    <div>
+      <b-alert v-if="this.cmdError" show variant="danger">{{ this.message }}</b-alert>
+    </div>
   </div>
 </template>
 
@@ -130,7 +134,8 @@ export default {
   data() {
     return {
       content: "",
-      message: "Hello Vue!",
+      message: "",
+      cmdError: false,
       successful: false,
       newGateText: "",
       newUserText: "",
@@ -171,8 +176,6 @@ export default {
     deleteGate(index) {
       const currentGate = this.content.gates[index];
       const myGate = this.content.user_gate;
-      console.log(currentGate);
-      console.log(myGate);
       if (currentGate != myGate) {
         this.content.gates.splice(index, 1);
       }
@@ -181,6 +184,36 @@ export default {
       const currentGate = this.content.gates[index];
       const myGate = this.content.my_gate;
       return currentGate === myGate;
+    },
+    openGate(index) {
+      console.log("calling OPEN GATE");
+      this.message = "";
+      this.cmdError = false;
+      const currentGate = this.content.gates[index];
+      const myGate = this.content.my_gate;
+      console.log(currentGate);
+      console.log(this.content);
+      if (currentGate == myGate) {
+        // open the gate
+        console.log("calling MY OPEN GATE");
+        UserService.triggerCommand(this.currentUser, "is_open").then(
+          (response) => {
+            // this.content = response.data;
+            // this.successful = true;
+            // this.items = this.content.gates;
+            this.cmdError = false;
+            console.log("openGate SUCCESS");
+          },
+          (error) => {
+            console.log("openGate ERROR");
+            this.cmdError = true;
+            this.message =
+              (error.response && error.response.data && error.response.data.message) ||
+              error.message ||
+              error.toString();
+          }
+        );
+      }
     },
     addUser: function () {
       if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(this.email)) {

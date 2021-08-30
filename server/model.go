@@ -55,27 +55,13 @@ type RegisterResponse struct {
 }
 
 type GateEvent struct {
-	GateName *string `json:"gate_name,omitempty"`
-	Email    *string `json:"email,omitempty"`
-	Password *string `json:"password,omitempty"`
-}
-
-type CloseEvent struct {
-	GateEvent
-}
-
-type StatusEvent struct {
-	GateEvent
-}
-
-type LearnEvent struct {
-	GateEvent
-}
-
-type TestEvent struct {
-	GateEvent
-}
-
-type SetEvent struct {
-	GateEvent
+	GateName     *string `json:"gate_name,omitempty"`
+	IsOpen       *bool   `json:"is_open,omitempty"`
+	IsClose      *bool   `json:"is_close,omitempty"`
+	IsLearnOpen  *bool   `json:"is_learn_open,omitempty"`
+	IsLearnClose *bool   `json:"is_learn_close,omitempty"`
+	IsTestOpen   *bool   `json:"is_test_open,omitempty"`
+	IsTestClose  *bool   `json:"is_test_close,omitempty"`
+	IsSetOpen    *bool   `json:"is_set_open,omitempty"`
+	IsSetClose   *bool   `json:"is_set_close,omitempty"`
 }
