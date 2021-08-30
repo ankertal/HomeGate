@@ -186,7 +186,6 @@ export default {
       return currentGate === myGate;
     },
     openGate(index) {
-      console.log("calling OPEN GATE");
       this.message = "";
       this.cmdError = false;
       const currentGate = this.content.gates[index];
@@ -195,17 +194,13 @@ export default {
       console.log(this.content);
       if (currentGate == myGate) {
         // open the gate
-        console.log("calling MY OPEN GATE");
         UserService.triggerCommand(this.currentUser, "is_open").then(
           (response) => {
-            // this.content = response.data;
-            // this.successful = true;
-            // this.items = this.content.gates;
-            this.cmdError = false;
-            console.log("openGate SUCCESS");
+            // this.content = response.status;
+            this.cmdError = response.cmd_error;
+            this.message = response.message;
           },
           (error) => {
-            console.log("openGate ERROR");
             this.cmdError = true;
             this.message =
               (error.response && error.response.data && error.response.data.message) ||

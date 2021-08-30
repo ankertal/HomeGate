@@ -97,18 +97,25 @@ func (srv *HomeGateServer) triggerGateCommand(w http.ResponseWriter, r *http.Req
 
 	select {
 	case g.rcState <- key:
-		openResponse := map[string]interface{}{
+		resp := map[string]interface{}{
 			"gate_name": g.name,
-			"status":    "success",
+			"cmd_error": false,
 			"message":   fmt.Sprintf("%v's gate command: %v, Acknowledged!", key, g.name),
 		}
 
-		json.NewEncoder(w).Encode(openResponse)
+		json.NewEncoder(w).Encode(resp)
 		return evt, nil
 
 	default:
 		log.Printf("client does not read events...")
 		close(g.rcState)
+		resp := map[string]interface{}{
+			"gate_name": g.name,
+			"cmd_error": true,
+			"message":   fmt.Sprintf("%v's gate command: %v, ERROR!", key, g.name),
+		}
+
+		json.NewEncoder(w).Encode(resp)
 		return nil, fmt.Errorf("client does not read events, closing stream")
 	}
 }
