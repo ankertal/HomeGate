@@ -72,7 +72,7 @@
                 <li v-if="isMyGate(index)" class="nav-item active">
                   <b-button pill variant="outline-dark" size="sm" @click="addUser(index)"
                     >Add User</b-button
-                  >
+                  >&nbsp;
                   <input
                     class="text-left"
                     size="sm"
