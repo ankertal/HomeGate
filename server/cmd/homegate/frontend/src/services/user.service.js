@@ -27,10 +27,18 @@ class UserService {
       .post(API_URL + 'command', postData, { headers: authHeader() })
       .then(response => {
         if (response.data.status) {
-          console.log('open returned' + response.data)
+          console.log('triggerCommand returned' + response.data)
         }
-
         return response.data;
+      })
+      .catch(function (error) {
+        if (error.response) {
+          console.log(error.response.data);
+          console.log(error.response.status);
+          console.log(error.response.headers);
+          return error.response.data;
+        }
+        return error
       });
   }
 

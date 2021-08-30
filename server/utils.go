@@ -32,7 +32,7 @@ func SetError(err Error, message string) Error {
 func (err Error) sendToClient(w http.ResponseWriter, httpCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpCode)
-	json.NewEncoder(w).Encode(map[string]string{"message": err.Message})
+	json.NewEncoder(w).Encode(map[string]interface{}{"message": err.Message, "is_error": true})
 }
 
 //take password as input and generate new hash password from it

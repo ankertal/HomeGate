@@ -99,7 +99,7 @@ func (srv *HomeGateServer) triggerGateCommand(w http.ResponseWriter, r *http.Req
 	case g.rcState <- key:
 		resp := map[string]interface{}{
 			"gate_name": g.name,
-			"cmd_error": false,
+			"is_error":  false,
 			"message":   fmt.Sprintf("%v's gate command: %v, Acknowledged!", g.name, key.String()),
 		}
 
@@ -109,9 +109,10 @@ func (srv *HomeGateServer) triggerGateCommand(w http.ResponseWriter, r *http.Req
 	default:
 		log.Printf("client does not read events...")
 		close(g.rcState)
+		g.rcState = nil
 		resp := map[string]interface{}{
 			"gate_name": g.name,
-			"cmd_error": true,
+			"is_error":  true,
 			"message":   fmt.Sprintf("%v's gate command: %v, ERROR!", g.name, key.String()),
 		}
 
@@ -192,6 +193,7 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 	// create a new channel for this gate
 	if g.rcState != nil {
 		close(g.rcState)
+		g.rcState = nil
 	}
 
 	g.rcState = make(chan KeyPressed, 1)

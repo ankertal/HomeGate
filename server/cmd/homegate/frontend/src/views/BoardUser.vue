@@ -206,10 +206,16 @@ export default {
       // open the gate
       UserService.triggerCommand(this.currentUser, currentGate, cmd).then(
         (response) => {
-          this.cmdError = response.cmd_error;
-          this.message = response.message;
-          this.showCommandStatus = !this.cmdError;
-          this.showAlert("info");
+          if (response.isAxiosError || response.is_error) {
+            this.message = response.message;
+            this.showCommandStatus = true;
+            this.showAlert("danger");
+          } else {
+            this.cmdError = response.is_error;
+            this.message = response.message;
+            this.showCommandStatus = !this.cmdError;
+            this.showAlert("info");
+          }
         },
         (error) => {
           this.cmdError = true;
