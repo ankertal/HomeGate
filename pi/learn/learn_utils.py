@@ -104,8 +104,8 @@ def extract_button_press(signal_file_name):
                 f.write("{0} {1}\n".format(
                     SIGNAL_SEGMENTS[0][i].seconds + SIGNAL_SEGMENTS[0][i].microseconds/1000000.0, SIGNAL_SEGMENTS[1][i]))
 
-def test():
-    print("learn test", flush=True)
+def learn_test():
+    print("hello")
 
 def record_button(signal_file_name):
     print("record_button", flush=True)

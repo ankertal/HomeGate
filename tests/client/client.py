@@ -26,7 +26,7 @@ def on_open(ws):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        host = "ws://localhost/stream"
+        host = "ws://10.0.0.24/stream"
     else:
         host = sys.argv[1]
     headers = ['SampleHeader: foo']

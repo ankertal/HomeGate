@@ -1,5 +1,5 @@
 .vscode/settings.json
-.../pyc
+**/*.pyc
 node_modules/
 dist/
 server/cmd/homegate/homegate
