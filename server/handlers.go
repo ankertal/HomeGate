@@ -100,7 +100,7 @@ func (srv *HomeGateServer) triggerGateCommand(w http.ResponseWriter, r *http.Req
 		resp := map[string]interface{}{
 			"gate_name": g.name,
 			"cmd_error": false,
-			"message":   fmt.Sprintf("%v's gate command: %v, Acknowledged!", key, g.name),
+			"message":   fmt.Sprintf("%v's gate command: %v, Acknowledged!", g.name, key.String()),
 		}
 
 		json.NewEncoder(w).Encode(resp)
@@ -112,7 +112,7 @@ func (srv *HomeGateServer) triggerGateCommand(w http.ResponseWriter, r *http.Req
 		resp := map[string]interface{}{
 			"gate_name": g.name,
 			"cmd_error": true,
-			"message":   fmt.Sprintf("%v's gate command: %v, ERROR!", key, g.name),
+			"message":   fmt.Sprintf("%v's gate command: %v, ERROR!", g.name, key.String()),
 		}
 
 		json.NewEncoder(w).Encode(resp)
