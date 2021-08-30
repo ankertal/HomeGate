@@ -42,7 +42,7 @@
                     pill
                     variant="outline-success"
                     size="sm"
-                    @click="openGate(index)"
+                    @click="gateCommand(index, 'is_open')"
                     >Open</b-button
                   >
                 </li>
@@ -52,7 +52,7 @@
                     pill
                     variant="outline-warning"
                     size="sm"
-                    @click="closeGate(index)"
+                    @click="gateCommand(index, 'is_close')"
                     >Close</b-button
                   >
                 </li>
@@ -115,8 +115,16 @@
       </ul>
     </div>
 
-    <div>
-      <b-alert v-if="this.cmdError" show variant="danger">{{ this.message }}</b-alert>
+    <br /><br /><br />
+    <div v-if="this.showCommandStatus">
+      <b-alert
+        :show="dismissCountDown"
+        :variant="alertVariant"
+        dismissible
+        @dismiss-count-down="countDownChanged"
+      >
+        {{ this.message }}</b-alert
+      >
     </div>
   </div>
 </template>
@@ -136,11 +144,15 @@ export default {
       content: "",
       message: "",
       cmdError: false,
+      showCommandStatus: false,
       successful: false,
       newGateText: "",
       newUserText: "",
       msg: [],
       email: "",
+      ismissCountDown: null,
+      showDismissibleAlert: false,
+      alertVariant: "info",
     };
   },
   watch: {
@@ -185,30 +197,30 @@ export default {
       const myGate = this.content.my_gate;
       return currentGate === myGate;
     },
-    openGate(index) {
+    gateCommand(index, cmd) {
       this.message = "";
       this.cmdError = false;
       const currentGate = this.content.gates[index];
-      const myGate = this.content.my_gate;
-      console.log(currentGate);
-      console.log(this.content);
-      if (currentGate == myGate) {
-        // open the gate
-        UserService.triggerCommand(this.currentUser, "is_open").then(
-          (response) => {
-            // this.content = response.status;
-            this.cmdError = response.cmd_error;
-            this.message = response.message;
-          },
-          (error) => {
-            this.cmdError = true;
-            this.message =
-              (error.response && error.response.data && error.response.data.message) ||
-              error.message ||
-              error.toString();
-          }
-        );
-      }
+      // const myGate = this.content.my_gate;
+      // if (currentGate == myGate) {
+      // open the gate
+      UserService.triggerCommand(this.currentUser, currentGate, cmd).then(
+        (response) => {
+          this.cmdError = response.cmd_error;
+          this.message = response.message;
+          this.showCommandStatus = !this.cmdError;
+          this.showAlert("info");
+        },
+        (error) => {
+          this.cmdError = true;
+          this.message =
+            (error.response && error.response.data && error.response.data.message) ||
+            error.message ||
+            error.toString();
+          this.showAlert("danger");
+        }
+      );
+      //}
     },
     addUser: function () {
       if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(this.email)) {
@@ -222,6 +234,13 @@ export default {
       } else {
         this.msg["email"] = "Invalid Email Address";
       }
+    },
+    countDownChanged(dismissCountDown) {
+      this.dismissCountDown = dismissCountDown;
+    },
+    showAlert(variant) {
+      this.dismissCountDown = 2;
+      this.alertVariant = variant;
     },
   },
 };

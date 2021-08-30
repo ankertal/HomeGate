@@ -28,7 +28,7 @@ if __name__ == "__main__":
         host = "ws://localhost/stream"
     else:
         host = sys.argv[1]
-    headers = ['Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJlbWFpbCI6Ind5YXJvbkBnbWFpbC5jb20iLCJleHAiOjE2MzAzMjU0OTUsInJvbGUiOiJ1c2VyIn0.P2wBiUKLVklYJWF1p5GBezOsb1878R4jRqONUYVbZjU']
+    headers = ['Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJlbWFpbCI6Ind5YXJvbkBnbWFpbC5jb20iLCJleHAiOjE2MzAzMjc2MzksInJvbGUiOiJ1c2VyIn0.WquRy4n07iHPcxK9BOMBSkwzheG0CdfuLH4BldojBtc']
     ws = websocket.WebSocketApp(host,
                                 on_message=on_message,
                                 on_error=on_error,

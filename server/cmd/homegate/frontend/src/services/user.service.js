@@ -13,15 +13,16 @@ class UserService {
     return axios.get(API_URL + 'user', { headers: authHeader() });
   }
 
-  createCommandJson(user, cmd) {
+  createCommandJson(user, gateName, cmd) {
     var item = {}
     item[cmd] = true;
-    item["gate_name"] = user.my_gate;
+    //item["gate_name"] = user.my_gate;
+    item["gate_name"] = gateName;
     return item
   }
 
-  triggerCommand(user, cmd) {
-    var postData = this.createCommandJson(user, cmd)
+  triggerCommand(user, gateName, cmd) {
+    var postData = this.createCommandJson(user, gateName, cmd)
     return axios
       .post(API_URL + 'command', postData, { headers: authHeader() })
       .then(response => {

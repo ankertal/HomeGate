@@ -47,11 +47,11 @@ func (srv *HomeGateServer) checkGateRequestParams(w http.ResponseWriter, r *http
 
 	g, ok := srv.gates[*evt.GateName]
 	if !ok {
-		return nil, nil, fmt.Errorf("handler: unknown gate: %v", *evt.GateName)
+		return nil, nil, fmt.Errorf("User: %v, does not has access to gate: %v", userEmail, *evt.GateName)
 	}
 
 	if _, userAllowed := g.userEmails[userEmail]; !userAllowed {
-		return nil, nil, fmt.Errorf("handler: user: %v, does not has access to gate: %v", userEmail, *evt.GateName)
+		return nil, nil, fmt.Errorf("User: %v, does not has access to gate: %v", userEmail, *evt.GateName)
 	}
 
 	return g, &evt, nil
