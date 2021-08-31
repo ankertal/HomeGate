@@ -37,75 +37,61 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
               <ul class="navbar-nav">
-                <li class="nav-item">
-                  <b-button
-                    pill
-                    variant="outline-success"
-                    size="sm"
-                    @click="gateCommand(index, 'is_open')"
-                    >Open</b-button
-                  >
-                </li>
-                &nbsp;&nbsp;
-                <li class="nav-item">
-                  <b-button
-                    pill
-                    variant="outline-warning"
-                    size="sm"
-                    @click="gateCommand(index, 'is_close')"
-                    >Close</b-button
-                  >
-                </li>
-                &nbsp;&nbsp;
-                <li class="nav-item active">
-                  <b-button
-                    pill
-                    variant="outline-danger"
-                    size="sm"
-                    @click="deleteGate(index)"
-                    :disabled="isMyGate(index)"
-                  >
-                    Delete
-                  </b-button>
-                </li>
-                &nbsp;&nbsp;&nbsp;&nbsp;
-                <li v-if="isMyGate(index)" class="nav-item active">
-                  <b-button pill variant="outline-dark" size="sm" @click="addUser(index)"
-                    >Add User</b-button
-                  >&nbsp;
-                  <input
-                    class="text-left"
-                    size="sm"
-                    type="text"
-                    v-model="email"
-                    required
-                  />
-                  <span v-if="msg.email">{{ msg.email }}</span>
-                  <!-- <div>
-                    <b-dropdown split text="Options" class="m-2">
-                      <b-dropdown-item @click="addGate()">Add User</b-dropdown-item>
-                      <b-dropdown-item>Another action</b-dropdown-item>
-                      <b-dropdown-item>Something else here...</b-dropdown-item>
-                    </b-dropdown>
-                  </div> -->
-                </li>
+                <b-button
+                  pill
+                  variant="outline-success"
+                  size="sm"
+                  @click="gateCommand(index, 'is_open')"
+                  >Open</b-button
+                >
+
+                <b-button
+                  pill
+                  variant="outline-warning"
+                  size="sm"
+                  @click="gateCommand(index, 'is_close')"
+                  >Close</b-button
+                >
+
+                <b-button
+                  pill
+                  variant="outline-danger"
+                  size="sm"
+                  @click="deleteGate(index)"
+                  :disabled="isMyGate(index)"
+                >
+                  Delete
+                </b-button>
+
+                <div v-if="isMyGate(index)" class="input-group input-group-sm mb-3">
+                  <div class="input-group-prepend">
+                    <b-button
+                      pill
+                      variant="outline-dark"
+                      size="sm"
+                      @click="addUser(index)"
+                      >Add User</b-button
+                    >
+                  </div>
+                  <input class="form-control" type="text" v-model="email" required />
+                  <span v-if="msg.email">&nbsp;&nbsp;{{ msg.email }}</span>
+                </div>
               </ul>
             </div>
           </nav>
         </li>
       </ul>
 
-      <div id="gate-list">
+      <!-- <div id="gate-list">
         <form v-on:submit.prevent="addGate">
           <label for="new-gate">Add a gate to {{ currentUser.username }}: </label>
           &nbsp;&nbsp;
           <input v-model="newGateText" id="new-gate" placeholder="e.g. gate-XXXXXX" />
           <button>Add</button>
         </form>
-      </div>
+      </div> -->
     </div>
 
-    <br /><br /><br />
     <div v-if="successful">
       <strong>My ({{ currentUser.my_gate }}) friends: </strong>
       <ul id="uses-list">
@@ -115,7 +101,6 @@
       </ul>
     </div>
 
-    <br /><br /><br />
     <div v-if="this.showCommandStatus">
       <b-alert
         :show="dismissCountDown"
@@ -238,7 +223,7 @@ export default {
       if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(value)) {
         this.msg["email"] = "";
       } else {
-        this.msg["email"] = "Invalid Email Address";
+        this.msg["email"] = "Invalid Email";
       }
     },
     countDownChanged(dismissCountDown) {
