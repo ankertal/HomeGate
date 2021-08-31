@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -95,16 +96,32 @@ func (srv *HomeGateServer) triggerGateCommand(w http.ResponseWriter, r *http.Req
 		key = SetClose
 	}
 
+	err = sendCommandToGate(w, g, key)
+	if err != nil {
+		return nil, err
+	}
+
+	return evt, nil
+}
+
+func sendCommandToGate(w http.ResponseWriter, g *userGate, key KeyPressed) error {
+	if g.rcState == nil {
+		var err Error
+		err = SetError(err, "Oh Man ! The gate device has not been connected yet, aborting request")
+		err.sendToClient(w, http.StatusBadRequest)
+		return fmt.Errorf(err.Message)
+	}
+
 	select {
 	case g.rcState <- key:
 		resp := map[string]interface{}{
 			"gate_name": g.name,
 			"is_error":  false,
-			"message":   fmt.Sprintf("%v's gate command: %v, Acknowledged!", g.name, key.String()),
+			"message":   fmt.Sprintf("Yay, gate command: %v, Acknowledged!", key.String()),
 		}
 
 		json.NewEncoder(w).Encode(resp)
-		return evt, nil
+		return nil
 
 	default:
 		log.Printf("client does not read events...")
@@ -113,16 +130,84 @@ func (srv *HomeGateServer) triggerGateCommand(w http.ResponseWriter, r *http.Req
 		resp := map[string]interface{}{
 			"gate_name": g.name,
 			"is_error":  true,
-			"message":   fmt.Sprintf("%v's gate command: %v, ERROR!", g.name, key.String()),
+			"message":   fmt.Sprintf("Gate command: %v, ERROR!", key.String()),
 		}
 
 		json.NewEncoder(w).Encode(resp)
-		return nil, fmt.Errorf("client does not read events, closing stream")
+		return fmt.Errorf("client does not read events, closing stream")
 	}
 }
 
 func (srv *HomeGateServer) command(w http.ResponseWriter, r *http.Request) {
 	srv.triggerGateCommand(w, r)
+}
+
+func (srv *HomeGateServer) siri(w http.ResponseWriter, r *http.Request) {
+	var evt SiriCommand
+	err := json.NewDecoder(r.Body).Decode(&evt)
+	if err != nil {
+		var err Error
+		err = SetError(err, "siri: failed to decode post message SiriCommand")
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	var cmd KeyPressed
+	siriCommand := evt.OpenOrCloseCommand
+	if strings.EqualFold(siriCommand, Open.String()) {
+		cmd = Open
+	} else if strings.EqualFold(siriCommand, Close.String()) {
+		cmd = Close
+	} else {
+		var err Error
+		err = SetError(err, fmt.Sprintf("siri: unknown gate command (must be either close or open): %v", siriCommand))
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	connection := GetDatabase()
+	defer CloseDatabase(connection)
+
+	var authUser User
+	connection.Where("email = 	?", evt.Email).First(&authUser)
+
+	if authUser.Email == "" {
+		var err Error
+		err = SetError(err, "siri: Username or Password is incorrect")
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	check := CheckPasswordHash(evt.Password, authUser.Password)
+	if !check {
+		var err Error
+		err = SetError(err, "Username or Password is incorrect")
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	// user the default user's gate in order to open it
+	defaultUserGate := authUser.MyGateName
+	if defaultUserGate == "" {
+		var err Error
+		err = SetError(err, "siri: Can't locate default user's gate ?!")
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	// lock the server
+	srv.Lock()
+	defer srv.Unlock()
+
+	g, ok := srv.gates[defaultUserGate]
+	if !ok {
+		var err Error
+		err = SetError(err, fmt.Sprintf("siri: unknown gate: %v", defaultUserGate))
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	sendCommandToGate(w, g, cmd)
 }
 
 func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
@@ -179,7 +264,7 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// lock the server as we set up the map
+	// lock the server
 	srv.Lock()
 
 	g, ok := srv.gates[*streamRequest.GateName]
@@ -201,6 +286,7 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 	// unlock the server now, hold a copy of the channel
 	srv.Unlock()
 
+	// TODO: add keep alive messages from the client
 	for rcEvent := range g.rcState {
 		err = c.WriteMessage(mt, []byte(fmt.Sprintf("%v", rcEvent)))
 		if err != nil {
