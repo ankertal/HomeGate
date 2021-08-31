@@ -92,7 +92,7 @@ func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 	r.HandleFunc("/stream", srv.stream).Methods("GET")
 
 	// We will setup our server so we can serve static assest like images, css from the /static/{file} route
-	staticDir := fmt.Sprintf("../../static/%v", srv.config.WebDistro)
+	staticDir := fmt.Sprintf("%v../../static/", srv.config.WebDistro)
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
 	r.HandleFunc("/signup", srv.signUp).Methods("POST")
