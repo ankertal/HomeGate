@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:80/';
+const API_URL = 'http://api.openhomegate.com:80/';
 
 class AuthService {
   login(user) {
