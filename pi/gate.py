@@ -21,10 +21,9 @@ load_dotenv()
 
 SIGNAL_DIR = os.getenv('SIGNAL_DIR')
 SERVER_HOMEGATE_URL = os.getenv('SERVER_HOMEGATE_URL')
-GATE_NAME = os.getenv('GATE_NAME')
 SIGNAL_PREFIX = os.getenv('SIGNAL_PREFIX')
 GATE_USER = os.getenv('GATE_USER')
-GATE_PASSWORD = os.getenv('GATE_PASSWORDpyt')
+GATE_PASSWORD = os.getenv('GATE_PASSWORD')
 
 OPEN_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
 STOP_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
@@ -156,7 +155,7 @@ def on_remote_control(ws, button):
 
 
 def on_error(ws, error):
-    logit("received an error from the homegate server", error)
+    logit("received an error from the homegate server", str(error))
     sys.exit("exiting and let cron restart")
 
 
@@ -166,10 +165,11 @@ def on_close(ws, close_status_code, close_msg):
 
 
 def on_open(ws):
-    gate = {'gate_name': 'gate-46154121241', 'is_open': True,
-            'email': 'wyaron@gmail.com', 'password': '123456'}
-    gate_json = json.dumps(gate)
-    ws.send(gate_json)
+    postData = {}
+    postData['email'] = GATE_USER
+    postData['password'] = GATE_PASSWORD
+    open_post_data_json = json.dumps(postData)
+    ws.send(open_post_data_json)
 
 
 def load_ctrl_signals():
