@@ -69,6 +69,8 @@ export default {
           error.toString();
       }
     );
+
+    this.$router.push("/");
   },
 };
 </script>
