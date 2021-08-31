@@ -236,13 +236,6 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if streamRequest.GateName == nil {
-		var err Error
-		err = SetError(err, "stream: missing gate name parmeter")
-		err.sendToClient(w, http.StatusBadRequest)
-		return
-	}
-
 	connection := GetDatabase()
 	defer CloseDatabase(connection)
 
@@ -267,10 +260,10 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 	// lock the server
 	srv.Lock()
 
-	g, ok := srv.gates[*streamRequest.GateName]
+	g, ok := srv.gates[authUser.MyGateName]
 	if !ok {
 		var err Error
-		err = SetError(err, fmt.Sprintf("stream: unknown gate: %v", streamRequest.GateName))
+		err = SetError(err, fmt.Sprintf("stream: unknown gate: %v", authUser.MyGateName))
 		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}

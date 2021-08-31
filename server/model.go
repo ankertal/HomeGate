@@ -68,7 +68,6 @@ type GateEvent struct {
 
 // DeviceStreamRequest is the request send from the gate controller (pi) to the stream endpoint
 type DeviceStreamRequest struct {
-	GateEvent
 	Authentication
 }
 
