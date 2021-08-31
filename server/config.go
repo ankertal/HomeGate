@@ -30,6 +30,8 @@ type ServerConfig struct {
 
 	// jwt secret key to sign the tokens
 	JWTSecretKey string `envconfig:"jwt_secret_key" default:"homegate;5060102"`
+
+	WebDistro string `envconfig:"web_distro" default:"./frontend/dist/"`
 }
 
 // LoadConfig loads  server configuration from the environment

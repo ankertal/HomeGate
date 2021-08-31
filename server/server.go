@@ -92,7 +92,8 @@ func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 	r.HandleFunc("/stream", srv.stream).Methods("GET")
 
 	// We will setup our server so we can serve static assest like images, css from the /static/{file} route
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+	staticDir := fmt.Sprintf("../../static/%v", srv.config.WebDistro)
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
 	r.HandleFunc("/signup", srv.signUp).Methods("POST")
 	r.HandleFunc("/signin", srv.signIn).Methods("POST")
@@ -100,7 +101,7 @@ func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 	r.HandleFunc("/user", IsAuthorized(srv.userIndex)).Methods("GET")
 
 	// MUST put this last as order matters
-	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("./frontend/dist/"))))
+	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir(srv.config.WebDistro))))
 }
 
 var NotImplemented = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
