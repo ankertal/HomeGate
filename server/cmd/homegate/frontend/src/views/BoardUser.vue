@@ -21,62 +21,30 @@
         <li v-for="(gate, index) in content.gates" :key="index">
           <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <a class="navbar-brand" href="#"
-              ><span v-if="isMyGate(index)" style="color: red">{{ gate }}</span>
-              <span v-if="!isMyGate(index)" style="color: blue">{{ gate }}</span></a
+              ><span v-if="isMyGate(index)" style="color: blue">{{ gate }}</span>
+              <span v-if="!isMyGate(index)" style="color: indigo">{{ gate }}</span></a
             >
-            <button
-              class="navbar-toggler"
-              type="button"
-              data-toggle="collapse"
-              data-target="#navbarNav"
-              aria-controls="navbarNav"
-              aria-expanded="false"
-              aria-label="Toggle navigation"
-            >
-              <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-              <ul class="navbar-nav">
-                <b-button
-                  pill
-                  variant="outline-success"
-                  size="sm"
-                  @click="gateCommand(index, 'is_open')"
-                  >Open</b-button
+            <div>
+              <b-dropdown
+                id="gate-options"
+                text="Options"
+                variant="primary"
+                size="sm"
+                class="m-2"
+              >
+                <b-dropdown-item @click="gateCommand(index, 'is_open')" active
+                  >Open</b-dropdown-item
                 >
-
-                <b-button
-                  pill
-                  variant="outline-warning"
-                  size="sm"
-                  @click="gateCommand(index, 'is_close')"
-                  >Close</b-button
+                <b-dropdown-item @click="gateCommand(index, 'is_close')"
+                  >Close</b-dropdown-item
                 >
-
-                <b-button
-                  pill
-                  variant="outline-danger"
-                  size="sm"
-                  @click="deleteGate(index)"
-                  :disabled="isMyGate(index)"
-                >
-                  Delete
-                </b-button>
-
-                <div v-if="isMyGate(index)" class="input-group input-group-sm mb-3">
-                  <div class="input-group-prepend">
-                    <b-button
-                      pill
-                      variant="outline-dark"
-                      size="sm"
-                      @click="addUser(index)"
-                      >Add User</b-button
-                    >
-                  </div>
-                  <input class="form-control" type="text" v-model="email" required />
-                  <span v-if="msg.email">&nbsp;&nbsp;{{ msg.email }}</span>
-                </div>
-              </ul>
+                <span v-if="isMyGate(index)">
+                  <b-dropdown-item disabled>Delete</b-dropdown-item>
+                </span>
+                <span v-else>
+                  <b-dropdown-item @click="deleteGate(index)">Delete</b-dropdown-item>
+                </span>
+              </b-dropdown>
             </div>
           </nav>
         </li>
@@ -95,10 +63,22 @@
     <div v-if="successful">
       <strong>My ({{ currentUser.my_gate }}) friends: </strong>
       <ul id="uses-list">
-        <li v-for="(item, index) in this.content.users">
+        <li v-for="(item, index) in this.content.users" :key="item">
           {{ item }}
         </li>
       </ul>
+
+      <b-input-group prepend="Friend:" class="mt-3">
+        <b-form-input v-model="email" :state="isEmailValid(this.email)"></b-form-input>
+        <b-input-group-append>
+          <b-button @click="addUser(currentUser.my_gate)" variant="outline-success"
+            >Add</b-button
+          >
+          <b-button @click="deleteUser(currentUser.my_gate)" variant="info"
+            >Delete</b-button
+          >
+        </b-input-group-append>
+      </b-input-group>
     </div>
 
     <div v-if="this.showCommandStatus">
@@ -132,20 +112,12 @@ export default {
       showCommandStatus: false,
       successful: false,
       newGateText: "",
-      newUserText: "",
       msg: [],
       email: "",
       ismissCountDown: null,
       showDismissibleAlert: false,
       alertVariant: "info",
     };
-  },
-  watch: {
-    email(value) {
-      // binding this to the data value in the email input
-      this.email = value;
-      this.validateEmail(value);
-    },
   },
   mounted() {
     UserService.getUserBoard().then(
@@ -213,18 +185,30 @@ export default {
       );
       //}
     },
-    addUser: function () {
+    addUser(gateName) {
       if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(this.email)) {
-        this.content.users.push(this.email);
-        this.newUserText = "";
+        if (!this.content.users.includes(this.email)) {
+          this.content.users.push(this.email);
+        } else {
+        }
+        this.email = "";
       }
     },
-    validateEmail(value) {
-      if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(value)) {
-        this.msg["email"] = "";
-      } else {
-        this.msg["email"] = "Invalid Email";
+    deleteUser(gateName) {
+      if (this.email == this.currentUser.email) {
+        return;
       }
+
+      var index = this.content.users.indexOf(this.email);
+      if (index > -1) {
+        this.content.users.splice(index, 1);
+      }
+    },
+    isEmailValid(value) {
+      if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(value)) {
+        return true;
+      }
+      return false;
     },
     countDownChanged(dismissCountDown) {
       this.dismissCountDown = dismissCountDown;
