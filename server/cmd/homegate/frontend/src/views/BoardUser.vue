@@ -19,34 +19,27 @@
       <strong>Gates:</strong>
       <ul>
         <li v-for="(gate, index) in content.gates" :key="index">
-          <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="#"
-              ><span v-if="isMyGate(index)" style="color: blue">{{ gate }}</span>
-              <span v-if="!isMyGate(index)" style="color: indigo">{{ gate }}</span></a
-            >
-            <div>
-              <b-dropdown
-                id="gate-options"
-                text="Options"
-                variant="primary"
-                size="sm"
-                class="m-2"
+          <b-dropdown
+            :variant="gateVariantInList(index)"
+            class="m-2"
+            size="md"
+            :text="gate"
+          >
+          
+              <b-dropdown-item @click="gateCommand(index, 'is_open')" active
+                >Open</b-dropdown-item
               >
-                <b-dropdown-item @click="gateCommand(index, 'is_open')" active
-                  >Open</b-dropdown-item
-                >
-                <b-dropdown-item @click="gateCommand(index, 'is_close')"
-                  >Close</b-dropdown-item
-                >
-                <span v-if="isMyGate(index)">
-                  <b-dropdown-item disabled>Delete</b-dropdown-item>
-                </span>
-                <span v-else>
-                  <b-dropdown-item @click="deleteGate(index)">Delete</b-dropdown-item>
-                </span>
-              </b-dropdown>
-            </div>
-          </nav>
+              <b-dropdown-item @click="gateCommand(index, 'is_close')"
+                >Close</b-dropdown-item
+              >
+              <span v-if="isMyGate(index)">
+                <b-dropdown-item disabled>Delete</b-dropdown-item>
+              </span>
+              <span v-else>
+                <b-dropdown-item @click="deleteGate(index)">Delete</b-dropdown-item>
+              </span>
+            </b-dropdown>
+          </b-dropdown>
         </li>
       </ul>
 
@@ -68,7 +61,7 @@
         </li>
       </ul>
 
-      <b-input-group prepend="Friend:" class="mt-3">
+      <b-input-group prepend="Friend:" class="mb-3">
         <b-form-input v-model="email" :state="isEmailValid(this.email)"></b-form-input>
         <b-input-group-append>
           <b-button @click="addUser(currentUser.my_gate)" variant="outline-success"
@@ -153,6 +146,12 @@ export default {
       const currentGate = this.content.gates[index];
       const myGate = this.content.my_gate;
       return currentGate === myGate;
+    },
+    gateVariantInList(index) {
+      if (this.isMyGate(index)) {
+        return 'outline-danger';
+      }
+      return 'primary';
     },
     gateCommand(index, cmd) {
       this.message = "";

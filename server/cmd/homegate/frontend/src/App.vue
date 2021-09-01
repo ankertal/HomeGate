@@ -9,7 +9,9 @@
           </router-link>
         </li>
         <li class="nav-item">
-          <router-link v-if="currentUser" to="/user" class="nav-link">User</router-link>
+          <router-link v-if="currentUser" to="/user" class="nav-link"
+            ><font-awesome-icon icon="bolt" />User</router-link
+          >
         </li>
       </div>
 

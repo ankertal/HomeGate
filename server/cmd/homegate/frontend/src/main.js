@@ -16,7 +16,8 @@ import {
   faSignOutAlt,
   faCoffee,
   faCheck,
-  faTimes
+  faTimes,
+  faBolt
 } from '@fortawesome/free-solid-svg-icons';
 
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
@@ -25,7 +26,7 @@ import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 
-library.add(faHome, faUser, faUserPlus, faSignInAlt, faSignOutAlt, faCoffee, faCheck, faTimes);
+library.add(faHome, faUser, faUserPlus, faSignInAlt, faSignOutAlt, faCoffee, faCheck, faTimes, faBolt);
 
 Vue.config.productionTip = false;
 
