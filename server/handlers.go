@@ -406,14 +406,6 @@ func (srv *HomeGateServer) signIn(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(loginResponse)
 }
 
-func (srv *HomeGateServer) adminIndex(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Role") != "admin" {
-		w.Write([]byte("Not authorized."))
-		return
-	}
-	w.Write([]byte("Welcome, Admin."))
-}
-
 func (srv *HomeGateServer) userIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

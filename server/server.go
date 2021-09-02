@@ -97,8 +97,12 @@ func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 
 	r.HandleFunc("/signup", srv.signUp).Methods("POST")
 	r.HandleFunc("/signin", srv.signIn).Methods("POST")
-	r.HandleFunc("/admin", IsAuthorized(srv.adminIndex)).Methods("GET")
 	r.HandleFunc("/user", IsAuthorized(srv.userIndex)).Methods("GET")
+
+	// disable 404 page not found when user refresh screen (SPA known issue)
+	r.HandleFunc("/login", redirectHomeFunc).Methods("GET")
+	r.HandleFunc("/profile", redirectHomeFunc).Methods("GET")
+	r.HandleFunc("/register", redirectHomeFunc).Methods("GET")
 
 	// MUST put this last as order matters
 	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir(srv.config.WebDistro))))
@@ -107,3 +111,7 @@ func (srv *HomeGateServer) setupRoutes(r *mux.Router) {
 var NotImplemented = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Not Implemented"))
 })
+
+var redirectHomeFunc = func(res http.ResponseWriter, req *http.Request) {
+	http.Redirect(res, req, fmt.Sprintf("http://%s", req.Host), http.StatusPermanentRedirect)
+}

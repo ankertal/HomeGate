@@ -1,12 +1,13 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/dgrijalva/jwt-go"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // check whether user is authorized or not
@@ -14,9 +15,11 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Header["Token"] == nil {
-			var err Error
-			err = SetError(err, "No Token Found")
-			json.NewEncoder(w).Encode(err)
+			log.Infof("IsAuthorized: no token found")
+			http.Redirect(w, r, fmt.Sprintf("http://%s", r.Host), http.StatusPermanentRedirect)
+			// var err Error
+			// err = SetError(err, "No Token Found")
+			// err.sendToClient(w, http.StatusUnauthorized)
 			return
 		}
 
