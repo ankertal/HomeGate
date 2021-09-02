@@ -1,8 +1,8 @@
-# HomeGate -- Your Automatic Gate to your Home 
+# HomeGate -- Your Gate but Smarter !
 
-This repository contains WIP code for controller an electronic gate controller by RF. 
-It uses a Raspberry Pi as a transmitter to the gate. Opening a gate can be triggered 
-via a command to an *HomeGate* server.
+This repository contains a fun project for an electronic gate controller. 
+It uses a Raspberry Pi as a transmitter to a gate. The commands are triggered 
+via an *HomeGate* server.
 
 # Build the Frontend
 
