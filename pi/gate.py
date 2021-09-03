@@ -172,6 +172,10 @@ def on_open(ws):
     ws.send(open_post_data_json)
 
 
+def on_ping(wsapp, message):
+    logit("Got a ping from server, a pong reply has already been automatically sent.")
+
+
 def load_ctrl_signals():
     open_signal_file = SIGNAL_DIR + SIGNAL_PREFIX + "-open.txt"
     stop_signal_file = SIGNAL_DIR + SIGNAL_PREFIX + "-stop.txt"
@@ -193,6 +197,7 @@ if __name__ == "__main__":
         SIGNAL_PREFIX, now.strftime("%d/%m/%Y %H:%M:%S"), streamEndpoint))
     ws = websocket.WebSocketApp(streamEndpoint,
                                 on_message=on_remote_control,
+                                on_ping=on_ping,
                                 on_error=on_error,
                                 on_close=on_close)
     ws.on_open = on_open

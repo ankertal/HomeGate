@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -213,7 +214,7 @@ func (srv *HomeGateServer) siri(w http.ResponseWriter, r *http.Request) {
 func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Print("upgrade:", err)
+		log.Infof("stream:  upgrade error: %v", err)
 		return
 	}
 	defer c.Close()
@@ -224,6 +225,7 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		var err Error
 		err = SetError(err, "Bad Request / data is not a gate event !!!")
 		err.sendToClient(w, http.StatusBadRequest)
+		log.Infof("stream:  Bad Request / data is not a gate event: %v", err)
 		return
 	}
 
@@ -246,6 +248,7 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		var err Error
 		err = SetError(err, "Username or Password is incorrect")
 		err.sendToClient(w, http.StatusBadRequest)
+		log.Infof("stream: Username or Password is incorrect: %v", err)
 		return
 	}
 
@@ -254,6 +257,7 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		var err Error
 		err = SetError(err, "Username or Password is incorrect")
 		err.sendToClient(w, http.StatusBadRequest)
+		log.Infof("stream: Password hash is incorrect: %v", err)
 		return
 	}
 
@@ -265,6 +269,7 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		var err Error
 		err = SetError(err, fmt.Sprintf("stream: unknown gate: %v", authUser.MyGateName))
 		err.sendToClient(w, http.StatusBadRequest)
+		log.Infof("stream: unknown gate: %v", authUser.MyGateName)
 		return
 	}
 
@@ -279,11 +284,25 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 	// unlock the server now, hold a copy of the channel
 	srv.Unlock()
 
-	// TODO: add keep alive messages from the client
-	for rcEvent := range g.rcState {
-		err = c.WriteMessage(mt, []byte(fmt.Sprintf("%v", rcEvent)))
-		if err != nil {
-			break
+	// send remote control events to the client and websocket pings
+	pingTicker := time.NewTicker(10 * time.Second)
+	for {
+		select {
+		case <-pingTicker.C:
+			// time to send a ping to the client
+			log.Infof("stream: send a ping to gate: %v", authUser.MyGateName)
+			c.SetWriteDeadline(time.Now().Add(5 * time.Second))
+			if err := c.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+				log.Infof("stream: sent a ping to gate: %v, [FAILED]", authUser.MyGateName)
+				pingTicker.Stop()
+				return
+			}
+		case rcEvent := <-g.rcState:
+			log.Infof("stream: send a rc command: [%v] to gate: [%v]", rcEvent, authUser.MyGateName)
+			err = c.WriteMessage(mt, []byte(fmt.Sprintf("%v", rcEvent)))
+			if err != nil {
+				return
+			}
 		}
 	}
 }
@@ -314,7 +333,10 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 
 	user.Password, err = GeneratehashPassword(user.Password)
 	if err != nil {
-		log.Fatalln("Error in password hashing.")
+		var err Error
+		err = SetError(err, "Error in password hashing")
+		err.sendToClient(w, http.StatusInternalServerError)
+		return
 	}
 
 	// allocate a unique gate identifier to the user
