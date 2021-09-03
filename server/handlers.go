@@ -286,21 +286,21 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 
 	// send remote control events to the client and websocket pings
 	pingTicker := time.NewTicker(10 * time.Second)
+	defer pingTicker.Stop()
 	for {
 		select {
 		case <-pingTicker.C:
 			// time to send a ping to the client
-			log.Infof("stream: send a ping to gate: %v", authUser.MyGateName)
 			c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			if err := c.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 				log.Infof("stream: sent a ping to gate: %v, [FAILED]", authUser.MyGateName)
-				pingTicker.Stop()
 				return
 			}
 		case rcEvent := <-g.rcState:
 			log.Infof("stream: send a rc command: [%v] to gate: [%v]", rcEvent, authUser.MyGateName)
 			err = c.WriteMessage(mt, []byte(fmt.Sprintf("%v", rcEvent)))
 			if err != nil {
+				log.Infof("stream: failed sending a rc command: [%v] to gate: [%v] [ERROR]", rcEvent, authUser.MyGateName)
 				return
 			}
 		}
