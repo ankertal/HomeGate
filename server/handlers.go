@@ -261,6 +261,12 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// set the pong handler
+	c.SetPongHandler(func(string) error {
+		log.Infof("stream: got a PONG from the gate: %v, [OK]", authUser.MyGateName)
+		return nil
+	})
+
 	// lock the server
 	srv.Lock()
 
@@ -293,14 +299,15 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 			// time to send a ping to the client
 			c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			if err := c.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-				log.Infof("stream: sent a ping to gate: %v, [FAILED]", authUser.MyGateName)
+				log.Infof("stream: sent a PING to gate: %v, [FAILED]", authUser.MyGateName)
 				return
 			}
 		case rcEvent := <-g.rcState:
 			log.Infof("stream: send a rc command: [%v] to gate: [%v]", rcEvent, authUser.MyGateName)
+			c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			err = c.WriteMessage(mt, []byte(fmt.Sprintf("%v", rcEvent)))
 			if err != nil {
-				log.Infof("stream: failed sending a rc command: [%v] to gate: [%v] [ERROR]", rcEvent, authUser.MyGateName)
+				log.Infof("stream: FAILED sending a rc command: [%v] to gate: [%v] [ERROR = %v]", rcEvent, authUser.MyGateName, err)
 				return
 			}
 		}
