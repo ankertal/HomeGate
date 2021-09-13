@@ -34,7 +34,9 @@ CANDIDATE_CLOSE_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
 
 NUM_ATTEMPTS = 5
 TRANSMIT_PIN = 23
-
+SWITCH_PIN = 10
+switch_state = False
+switch_press_time = datetime.now()
 
 def dump_state(signalNumber, frame):
     faulthandler.dump_traceback(file=sys.stderr, all_threads=True)
@@ -115,8 +117,6 @@ def transmit_signal(signal):
     global NUM_ATTEMPTS
 
     '''Transmit a signal stream using the GPIO transmitter'''
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(TRANSMIT_PIN, GPIO.OUT)
     log_screen("Transmitting gate signal, length: " +
                str(len(signal[0])))
     for t in range(NUM_ATTEMPTS):
@@ -135,6 +135,41 @@ users['Tal']['Dorit'] = '028014405'
 users['Yaron']['Tal'] = '024365645'
 users['Gilad']['Gilad'] = '12345678'
 users['Doron']['Doron'] = '12345678'
+
+def button_callback2(channel):
+    global switch_state
+    global switch_press_time
+    if switch_state == True:
+        switch_state = False
+        press_duration = datetime.now() - switch_press_time
+        print('\n*** press duration: ' + str(press_duration) + '***\n')
+        if press_duration.total_seconds() > 7:
+            print(' Hard Reset \n', flush=True)
+        elif press_duration.total_seconds() > 2:
+            print(' user config \n', flush=True)
+        else:
+            print(' Short press, ignoring \n', flush=True)
+    else:
+        switch_state = True
+        switch_press_time = datetime.now()
+   
+    
+     
+def button_callback(channel):
+    now = datetime.now()
+    while GPIO.input(SWITCH_PIN) == GPIO.HIGH:
+        continue
+    press_duration = datetime.now() - now
+
+    print('\n*** press duration: ' + str(press_duration) + '***\n')
+
+    if press_duration.total_seconds() > 7:
+        print(' Hard Reset \n', flush=True)
+    elif press_duration.total_seconds() > 2:
+        print(' user config \n', flush=True)
+    else:
+        print(' Short press, ignoring \n', flush=True)
+     
 
 def learn_open():
     now = datetime.now()
@@ -228,7 +263,7 @@ def main():
             button = statusJson['status']
             log_screen('Deployment: {0}'.format(deployment))
             log_screen('Button Press: {0}'.format(button))
-            print("Button pressed: " + get_command(button))
+            print("Remote control command: " + get_command(button))
 
             if button == NoOp:
                 continue
@@ -261,6 +296,7 @@ def main():
             
         except:
             print('exception\n', sys.exc_info()[0], flush=True)
+            GPIO.cleanup() # Clean up
             sys.exit("Error in gate main loop, exiting and letting cron restart")
 
        
@@ -275,6 +311,11 @@ def load_ctrl_signals():
 
 if __name__ == "__main__":
     signal.signal(signal.SIGHUP, dump_state)
+    '''Transmit a signal stream using the GPIO transmitter'''
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(TRANSMIT_PIN, GPIO.OUT)
+    GPIO.setup(SWITCH_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) # Set pin 2 to be an input pin and set initial value to be pulled low (off)
+    GPIO.add_event_detect(SWITCH_PIN,GPIO.RISING,callback=button_callback) # Setup event on pin 2 rising edge
 
     learn_utils.test()
     load_ctrl_signals()
