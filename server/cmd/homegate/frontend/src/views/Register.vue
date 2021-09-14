@@ -17,10 +17,9 @@
               class="form-control"
               name="username"
             />
-            <div
-              v-if="submitted && errors.has('username')"
-              class="alert-danger"
-            >{{errors.first('username')}}</div>
+            <div v-if="submitted && errors.has('username')" class="alert-danger">
+              {{ errors.first("username") }}
+            </div>
           </div>
           <div class="form-group">
             <label for="email">Email</label>
@@ -31,10 +30,9 @@
               class="form-control"
               name="email"
             />
-            <div
-              v-if="submitted && errors.has('email')"
-              class="alert-danger"
-            >{{errors.first('email')}}</div>
+            <div v-if="submitted && errors.has('email')" class="alert-danger">
+              {{ errors.first("email") }}
+            </div>
           </div>
           <div class="form-group">
             <label for="password">Password</label>
@@ -45,10 +43,22 @@
               class="form-control"
               name="password"
             />
-            <div
-              v-if="submitted && errors.has('password')"
-              class="alert-danger"
-            >{{errors.first('password')}}</div>
+            <div v-if="submitted && errors.has('password')" class="alert-danger">
+              {{ errors.first("password") }}
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="gate_name">Gate Name</label>
+            <input
+              v-model="user.gate_name"
+              v-validate="'required|min:5|max:50'"
+              type="text"
+              class="form-control"
+              name="gate_name"
+            />
+            <div v-if="submitted && errors.has('gate_name')" class="alert-danger">
+              {{ errors.first("gate_name") }}
+            </div>
           </div>
           <div class="form-group">
             <button class="btn btn-primary btn-block">Sign Up</button>
@@ -60,48 +70,50 @@
         v-if="message"
         class="alert"
         :class="successful ? 'alert-success' : 'alert-danger'"
-      >{{message}}</div>
+      >
+        {{ message }}
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import User from '../models/user';
+import User from "../models/user";
 
 export default {
-  name: 'Register',
+  name: "Register",
   data() {
     return {
-      user: new User('', '', ''),
+      user: new User("", "", ""),
       submitted: false,
       successful: false,
-      message: ''
+      message: "",
     };
   },
   computed: {
     loggedIn() {
       return this.$store.state.auth.status.loggedIn;
-    }
+    },
   },
   mounted() {
     if (this.loggedIn) {
-      this.$router.push('/profile');
+      this.$router.push("/profile");
     }
   },
   methods: {
     handleRegister() {
-      this.message = '';
+      this.message = "";
       this.submitted = true;
-      this.$validator.validate().then(isValid => {
+      this.$validator.validate().then((isValid) => {
         if (isValid) {
-          this.$store.dispatch('auth/register', this.user).then(
-            data => {
+          this.$store.dispatch("auth/register", this.user).then(
+            (data) => {
               this.message = data.message;
               this.successful = true;
               // uncomment if we want to move to login screen
               // this.$router.push('/login');
             },
-            error => {
+            (error) => {
               this.message =
                 (error.response && error.response.data && error.response.data.message) ||
                 error.message ||
@@ -111,8 +123,8 @@ export default {
           );
         }
       });
-    }
-  }
+    },
+  },
 };
 </script>
 

@@ -68,7 +68,7 @@ type GateEvent struct {
 
 // DeviceStreamRequest is the request send from the gate controller (pi) to the stream endpoint
 type DeviceStreamRequest struct {
-	Authentication
+	GateID string `json:"gate_id,omitempty"`
 }
 
 // SiriCommand is used for SR command via the phone, it uses simple gate ID (secret) authentication.

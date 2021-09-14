@@ -217,46 +217,24 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	connection := GetDatabase()
-	defer CloseDatabase(connection)
+	// lock the server
+	srv.Lock()
 
-	var authUser User
-	connection.Where("email = 	?", streamRequest.Email).First(&authUser)
-
-	if authUser.Email == "" {
+	gateID := streamRequest.GateID
+	g, ok := srv.gates[gateID]
+	if !ok {
 		var err Error
-		err = SetError(err, "Username or Password is incorrect")
+		err = SetError(err, fmt.Sprintf("stream: unknown gate: %v", gateID))
 		err.sendToClient(w, http.StatusBadRequest)
-		log.Infof("stream: Username or Password is incorrect: %v", err)
-		return
-	}
-
-	check := CheckPasswordHash(streamRequest.Password, authUser.Password)
-	if !check {
-		var err Error
-		err = SetError(err, "Username or Password is incorrect")
-		err.sendToClient(w, http.StatusBadRequest)
-		log.Infof("stream: Password hash is incorrect: %v", err)
+		log.Infof("stream: unknown gate: %v", gateID)
 		return
 	}
 
 	// set the pong handler
 	c.SetPongHandler(func(string) error {
-		log.Infof("stream: got a PONG from the gate: %v, [OK]", authUser.MyGateName)
+		log.Infof("stream: got a PONG from the gate: %v, [OK]", gateID)
 		return nil
 	})
-
-	// lock the server
-	srv.Lock()
-
-	g, ok := srv.gates[authUser.MyGateName]
-	if !ok {
-		var err Error
-		err = SetError(err, fmt.Sprintf("stream: unknown gate: %v", authUser.MyGateName))
-		err.sendToClient(w, http.StatusBadRequest)
-		log.Infof("stream: unknown gate: %v", authUser.MyGateName)
-		return
-	}
 
 	// create a new channel for this gate
 	if g.rcState != nil {
@@ -278,15 +256,15 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 			// time to send a ping to the client
 			c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			if err := c.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-				log.Infof("stream: sent a PING to gate: %v, [FAILED]", authUser.MyGateName)
+				log.Infof("stream: sent a PING to gate: %v, [FAILED]", gateID)
 				return
 			}
 		case rcEvent := <-g.rcState:
-			log.Infof("stream: send a rc command: [%v] to gate: [%v]", rcEvent, authUser.MyGateName)
+			log.Infof("stream: send a rc command: [%v] to gate: [%v]", rcEvent, gateID)
 			c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			err = c.WriteMessage(mt, []byte(fmt.Sprintf("%v", rcEvent)))
 			if err != nil {
-				log.Infof("stream: FAILED sending a rc command: [%v] to gate: [%v] [ERROR = %v]", rcEvent, authUser.MyGateName, err)
+				log.Infof("stream: FAILED sending a rc command: [%v] to gate: [%v] [ERROR = %v]", rcEvent, gateID, err)
 				return
 			}
 		}
@@ -302,6 +280,19 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var err Error
 		err = SetError(err, "Error in reading payload.")
+		err.sendToClient(w, http.StatusBadRequest)
+		return
+	}
+
+	gateName := user.MyGateName
+
+	// check that this gate ID does not exists
+	var dbGate Gate
+	connection.Where("name = ?", gateName).First(&dbGate)
+
+	if dbGate.Name != "" {
+		var err Error
+		err = SetError(err, "Provided user gate ID is already registered")
 		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
@@ -326,8 +317,8 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// allocate a unique gate identifier to the user
-	gateID, _ := sf.NextID()
-	myGate := Gate{Name: fmt.Sprintf("gate-%v", gateID), UserEmails: []string{user.Email}}
+	//gateID, _ := sf.NextID()
+	myGate := Gate{Name: fmt.Sprintf("gate-%v", gateName), UserEmails: []string{user.Email}}
 
 	// insert gate details in database
 	res := connection.Create(&myGate)

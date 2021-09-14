@@ -18,15 +18,14 @@ def on_close(ws, close_status_code, close_msg):
 
 
 def on_open(ws):
-    gate = {'gate_name': 'gate-46154121241', 'is_open': True,
-            'email': 'wyaron@gmail.com', 'password': '123456'}
+    gate = {'gate_id': 'gate-benbenben'}
     gate_json = json.dumps(gate)
     ws.send(gate_json)
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        host = "ws://10.0.0.24/stream"
+        host = "ws://10.0.0.40/stream"
     else:
         host = sys.argv[1]
     headers = ['SampleHeader: foo']
