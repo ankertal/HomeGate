@@ -22,20 +22,18 @@ def setup():
     error = ""
     if request.method == 'POST':
         # Form being submitted; grab data from form.
-        user_email = request.form['email']
-        user_password = request.form['password']
+        gate_id = request.form['gate_id']
 
         # Validate form data
-        if len(user_email) == 0 or len(user_password) == 0:
+        if len(gate_id) == 0:
             # Form data failed validation; try again
-            error = "Please supply both email and password"
+            error = "Please supply a valid gate ID"
         else:
             # Form data is valid; move along
-            print(f'User set email: {user_email}.')
-            print(f'User set password: {user_password}.')
+            print(f'User set gate ID: {gate_id}.')
             try:
                 subprocess.check_call(
-                    ['/home/pi/work/HomeGate/pi/setupEnvForDevice.sh', user_email, user_password])
+                    ['/home/pi/work/HomeGate/pi/setupEnvForDevice.sh', gate_id])
             except Exception as e:
                 error = 'failed to execute setupEnvForDevice.sh' + str(e)
                 return render_template('setup.html', message=error)

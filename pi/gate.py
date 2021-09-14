@@ -22,8 +22,10 @@ load_dotenv()
 SIGNAL_DIR = os.getenv('SIGNAL_DIR')
 SERVER_HOMEGATE_URL = os.getenv('SERVER_HOMEGATE_URL')
 SIGNAL_PREFIX = os.getenv('SIGNAL_PREFIX')
-GATE_USER = os.getenv('GATE_USER')
-GATE_PASSWORD = os.getenv('GATE_PASSWORD')
+GATE_ID = os.getenv('GATE_ID')
+
+if SIGNAL_PREFIX == None or SIGNAL_PREFIX == "":
+    SIGNAL_PREFIX = 'default'
 
 OPEN_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
 STOP_TRANSMIT_SIGNAL = [[], []]  # [[length], [Value 0/1]]
@@ -57,7 +59,7 @@ def read_signal(signal_file, signal):
 
 
 def transmit_signal(signal):
-    NUM_ATTEMPTS = 7
+    NUM_ATTEMPTS = 5
     TRANSMIT_PIN = 23
 
     GPIO.setmode(GPIO.BCM)
@@ -166,8 +168,7 @@ def on_close(ws, close_status_code, close_msg):
 
 def on_open(ws):
     postData = {}
-    postData['email'] = GATE_USER
-    postData['password'] = GATE_PASSWORD
+    postData['gate_id'] = GATE_ID
     open_post_data_json = json.dumps(postData)
     ws.send(open_post_data_json)
 

@@ -71,9 +71,8 @@ type DeviceStreamRequest struct {
 	Authentication
 }
 
-// SiriCommand is used for SR command via the phone, it uses simple email/passwd authentication.
-// The siri command can only be used to open/close the default users's gate (e.g. MyGateName in LoginResponse)
+// SiriCommand is used for SR command via the phone, it uses simple gate ID (secret) authentication.
 type SiriCommand struct {
-	Authentication
+	GateID             string `json:"gate_id,omitempty"`
 	OpenOrCloseCommand string `json:"gate_command,omitempty"`
 }

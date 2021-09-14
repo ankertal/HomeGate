@@ -166,32 +166,11 @@ func (srv *HomeGateServer) siri(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	connection := GetDatabase()
-	defer CloseDatabase(connection)
-
-	var authUser User
-	connection.Where("email = 	?", evt.Email).First(&authUser)
-
-	if authUser.Email == "" {
+	// check if the gate exists
+	gateID := evt.GateID
+	if gateID == "" {
 		var err Error
-		err = SetError(err, "siri: Username or Password is incorrect")
-		err.sendToClient(w, http.StatusBadRequest)
-		return
-	}
-
-	check := CheckPasswordHash(evt.Password, authUser.Password)
-	if !check {
-		var err Error
-		err = SetError(err, "Username or Password is incorrect")
-		err.sendToClient(w, http.StatusBadRequest)
-		return
-	}
-
-	// user the default user's gate in order to open it
-	defaultUserGate := authUser.MyGateName
-	if defaultUserGate == "" {
-		var err Error
-		err = SetError(err, "siri: Can't locate default user's gate ?!")
+		err = SetError(err, "siri: provided gate ID is empty")
 		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
@@ -200,10 +179,10 @@ func (srv *HomeGateServer) siri(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	defer srv.Unlock()
 
-	g, ok := srv.gates[defaultUserGate]
+	g, ok := srv.gates[gateID]
 	if !ok {
 		var err Error
-		err = SetError(err, fmt.Sprintf("siri: unknown gate: %v", defaultUserGate))
+		err = SetError(err, fmt.Sprintf("siri: unknown gate: %v", gateID))
 		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}

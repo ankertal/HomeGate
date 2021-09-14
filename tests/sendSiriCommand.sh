@@ -44,8 +44,7 @@ eval set -- "$PARAMS"
 generate_post_data() {
   cat <<EOF
 {
-  "email":"wyaron@gmail.com", 
-  "password":"123456",
+  "gate_id":"gate-1245406299518", 
   "gate_command" : "$Command"
 }
 EOF
