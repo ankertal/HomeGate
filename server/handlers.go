@@ -49,11 +49,11 @@ func (srv *HomeGateServer) checkGateRequestParams(w http.ResponseWriter, r *http
 
 	g, ok := srv.gates[*evt.GateName]
 	if !ok {
-		return nil, nil, fmt.Errorf("User: %v, does not has access to gate: %v", userEmail, *evt.GateName)
+		return nil, nil, fmt.Errorf("could not find gate: %v", *evt.GateName)
 	}
 
 	if _, userAllowed := g.userEmails[userEmail]; !userAllowed {
-		return nil, nil, fmt.Errorf("User: %v, does not has access to gate: %v", userEmail, *evt.GateName)
+		return nil, nil, fmt.Errorf("user: %v, does not has access to gate: %v", userEmail, *evt.GateName)
 	}
 
 	return g, &evt, nil
@@ -187,7 +187,7 @@ func (srv *HomeGateServer) siri(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// user the default user's gate in order to open it
+	// use the default user's gate in order to open it
 	defaultUserGate := authUser.MyGateName
 	if defaultUserGate == "" {
 		var err Error

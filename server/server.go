@@ -36,7 +36,7 @@ const (
 	SetStop
 )
 
-// userGate represents a user gate  (identified by the gate uuid name)
+// userGate represents a user's gate  (identified by the gate uuid name)
 type userGate struct {
 	name       string
 	userEmails map[string]bool
