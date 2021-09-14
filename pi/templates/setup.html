@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Setup HomeGate Device ID{% endblock %}
+
+{% block content %}
+    <form method="POST">
+        <p>
+            <label for="gate_id">Gate ID</label>
+            <input id="gate_id" name="gate_id" type="text">
+        </p>
+        <input type="submit" value="Set me up">
+    </form>
+{% endblock %}
