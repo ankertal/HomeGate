@@ -41,6 +41,19 @@
         hspace="50"
       />
     </div>
+    <br />
+    <br />
+    <div>
+      <p>Ittai Weinsberg (Technician)</p>
+      <img
+        class="profile-img-card"
+        src="@/assets/ittai.jpeg"
+        alt="Ittai Weinsberg"
+        width="100"
+        height="100"
+        hspace="50"
+      />
+    </div>
   </div>
 </template>
 

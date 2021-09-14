@@ -261,6 +261,12 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// set the pong handler
+	c.SetPongHandler(func(string) error {
+		log.Infof("stream: got a PONG from the gate: %v, [OK]", authUser.MyGateName)
+		return nil
+	})
+
 	// lock the server
 	srv.Lock()
 
@@ -286,21 +292,22 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 
 	// send remote control events to the client and websocket pings
 	pingTicker := time.NewTicker(10 * time.Second)
+	defer pingTicker.Stop()
 	for {
 		select {
 		case <-pingTicker.C:
 			// time to send a ping to the client
-			log.Infof("stream: send a ping to gate: %v", authUser.MyGateName)
 			c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			if err := c.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-				log.Infof("stream: sent a ping to gate: %v, [FAILED]", authUser.MyGateName)
-				pingTicker.Stop()
+				log.Infof("stream: sent a PING to gate: %v, [FAILED]", authUser.MyGateName)
 				return
 			}
 		case rcEvent := <-g.rcState:
 			log.Infof("stream: send a rc command: [%v] to gate: [%v]", rcEvent, authUser.MyGateName)
+			c.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			err = c.WriteMessage(mt, []byte(fmt.Sprintf("%v", rcEvent)))
 			if err != nil {
+				log.Infof("stream: FAILED sending a rc command: [%v] to gate: [%v] [ERROR = %v]", rcEvent, authUser.MyGateName, err)
 				return
 			}
 		}
