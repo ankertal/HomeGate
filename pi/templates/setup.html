@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Setup HomeGate Device{% endblock %}
+
+{% block content %}
+    <form method="POST">
+        <p>
+            <label for="email">Email</label>
+            <input id="email" name="email" type="text">
+        </p>
+        <p>
+            <label for="password">Password</label>
+            <input id="password" name="password" type="text">
+        </p>
+        <input type="submit" value="Set me up">
+    </form>
+{% endblock %}
