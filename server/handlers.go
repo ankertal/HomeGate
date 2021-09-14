@@ -336,6 +336,25 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(res.Error)
 	}
 
+	// update the in-memory state
+	srv.Lock()
+
+	g := &userGate{
+		name:       myGate.Name,
+		userEmails: make(map[string]bool),
+		rcState:    nil,
+	}
+
+	// keep the users emails in a map for quick access
+	for _, userEmail := range myGate.UserEmails {
+		g.userEmails[userEmail] = true
+	}
+
+	// keep it in the global gate map
+	srv.gates[myGate.Name] = g
+
+	srv.Unlock()
+
 	// return the response with a welcome message
 	registerResponse := RegisterResponse{
 		Name:    user.Name,
