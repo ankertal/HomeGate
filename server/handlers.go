@@ -227,6 +227,7 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		err = SetError(err, fmt.Sprintf("stream: unknown gate: %v", gateID))
 		err.sendToClient(w, http.StatusBadRequest)
 		log.Infof("stream: unknown gate: %v", gateID)
+		srv.Unlock()
 		return
 	}
 
