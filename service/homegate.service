@@ -1,0 +1,22 @@
+[Unit]
+Description=Homegate service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+ExecStart=/home/ubuntu/work/HomeGate/server/cmd/homegate/homegate
+WorkingDirectory=/home/ubuntu/work/HomeGate/server/cmd/homegate
+
+Environment="HOMEGATE_PSQL_USER=xxxxxxxx"
+Environment="HOMEGATE_PSQL_PASSWORD=xxxxxxx"
+Environment="HOMEGATE_PSQL_DBNAME=xxxxxxxxx"
+Environment="HOMEGATE_PSQL_DBHOST=localhost"
+Environment="HOMEGATE_PSQL_DBPORT=5432"
+Environment="HOMEGATE_JWT_SECRET_KEY=xxxxxxxxxxxxx"
+Environment="HOMEGATE_WEB_DISTRO=/home/ubuntu/work/HomeGate/server/cmd/homegate/frontend/dist/"
+
+[Install]
+WantedBy=multi-user.target
