@@ -191,6 +191,9 @@ func (srv *HomeGateServer) siri(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
+
+	dumpRequest(r)
+
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Infof("stream:  upgrade error: %v", err)
@@ -216,6 +219,8 @@ func (srv *HomeGateServer) stream(w http.ResponseWriter, r *http.Request) {
 		err.sendToClient(w, http.StatusBadRequest)
 		return
 	}
+
+	log.Infof("stream:  called for gate ID: %v", streamRequest.GateID)
 
 	// lock the server
 	srv.Lock()
