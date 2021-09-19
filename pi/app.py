@@ -30,10 +30,10 @@ def setup():
             error = "Please supply a valid gate ID"
         else:
             # Form data is valid; move along
-            print(f'User set gate ID: {gate_id}.')
+            print('User set gate ID:' + gate_id)
             try:
                 subprocess.check_call(
-                    ['/home/pi/work/HomeGate/pi/setupEnvForDevice.sh', gate_id])
+                    ['/home/pi/HomeGate/pi/setupEnvForDevice.sh', gate_id])
             except Exception as e:
                 error = 'failed to execute setupEnvForDevice.sh' + str(e)
                 return render_template('setup.html', message=error)
