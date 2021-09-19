@@ -40,7 +40,7 @@ def dump_state(signalNumber, frame):
 
 
 def logit(*args, **kwargs):
-    args = (datetime.now().strftime("%d/%m/%Y %H:%M:%S"),)+args
+    args = (datetime.now().strftime("%d/%m/%Y %H:%M:%S"), ) + args
     print(*args, flush=True)
 
 
@@ -64,8 +64,7 @@ def transmit_signal(signal):
 
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(TRANSMIT_PIN, GPIO.OUT)
-    logit("Transmitting gate signal, length: " +
-          str(len(signal[0])))
+    logit("Transmitting gate signal, length: " + str(len(signal[0])))
     for t in range(NUM_ATTEMPTS):
         for i in range(len(signal[0])):
             GPIO.output(TRANSMIT_PIN, signal[1][i])
@@ -76,8 +75,8 @@ def transmit_signal(signal):
 
 def learn_open():
     now = datetime.now()
-    logit('learn to open pressed: ' +
-          SIGNAL_PREFIX + " @ " + now.strftime("%d/%m/%Y %H:%M:%S"))
+    logit('learn to open pressed: ' + SIGNAL_PREFIX + " @ " +
+          now.strftime("%d/%m/%Y %H:%M:%S"))
     signal_file_name = "/tmp/" + SIGNAL_PREFIX + "-open.txt"
 
     logit("before record")
@@ -87,8 +86,8 @@ def learn_open():
 
 def learn_close():
     now = datetime.now()
-    logit('learn to close pressed: ' +
-          SIGNAL_PREFIX + " @ " + now.strftime("%d/%m/%Y %H:%M:%S"))
+    logit('learn to close pressed: ' + SIGNAL_PREFIX + " @ " +
+          now.strftime("%d/%m/%Y %H:%M:%S"))
 
     signal_file_name = "/tmp/" + SIGNAL_PREFIX + "-close.txt"
     learn_utils.record_button(signal_file_name + "-close.txt")
@@ -117,7 +116,9 @@ def set_open():
     try:
         shutil.copyfile(dst_open_signal_file, backup_open_signal_file)
     except:
-        logit('Could not backup original open gate signal - probably not recorded yet')
+        logit(
+            'Could not backup original open gate signal - probably not recorded yet'
+        )
         pass
     try:
         shutil.copyfile(src, dst_open_signal_file)
@@ -137,7 +138,9 @@ def set_close():
     try:
         shutil.copyfile(dst_close_signal_file, backup_close_signal_file)
     except:
-        logit('Could not backup original close gate signal - probably not recorded yet')
+        logit(
+            'Could not backup original close gate signal - probably not recorded yet'
+        )
         pass
     try:
         shutil.copyfile(src, dst_close_signal_file)
@@ -151,9 +154,20 @@ def on_remote_control(ws, button):
     logit("received a remote controler event: ", button)
     if button == "Close":
         transmit_signal(CLOSE_TRANSMIT_SIGNAL)
-
     if button == "Open":
         transmit_signal(OPEN_TRANSMIT_SIGNAL)
+    if button == "LearnOpen":
+        learn_open()
+    if button == "LearnClose":
+        learn_close()
+    if button == "SetOpen":
+        set_open()
+    if button == "SetClose":
+        set_close()
+    if button == "TestOpen":
+        test_open()
+    if button == "TestClose":
+        test_close()
 
 
 def on_error(ws, error):
@@ -174,7 +188,9 @@ def on_open(ws):
 
 
 def on_ping(wsapp, message):
-    logit("Got a ping from server, a pong reply has already been automatically sent.")
+    logit(
+        "Got a ping from server, a pong reply has already been automatically sent."
+    )
 
 
 def load_ctrl_signals():

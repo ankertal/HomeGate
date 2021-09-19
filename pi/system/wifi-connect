@@ -14,7 +14,7 @@ case "$1" in
     # make sure privileges don't persist across reboots
     if [ -d /var/lib/sudo ]
     then
-                /home/pi/HomeGate/system/periodoc-wifi-connect.sh &;
+                /home/pi/HomeGate/pi/system/periodoc-wifi-connect.sh &;
     fi
     ;;
   stop|reload|restart|force-reload|status)
