@@ -59,7 +59,7 @@ def read_signal(signal_file, signal):
 
 
 def transmit_signal(signal):
-    NUM_ATTEMPTS = 5
+    NUM_ATTEMPTS = 7
     TRANSMIT_PIN = 23
 
     GPIO.setmode(GPIO.BCM)
