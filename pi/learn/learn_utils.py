@@ -118,4 +118,4 @@ def record_button(signal_file_name):
 if __name__ == '__main__':
     record_signal()
     extract_signal_bursts()
-    extract_button_press()
+    extract_button_press(sys.argv[1])
