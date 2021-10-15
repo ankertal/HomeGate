@@ -290,6 +290,10 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// atomically handle a signup event as we update to tables not via a transaction
+	srv.Lock()
+	defer srv.Unlock()
+
 	gateName := user.MyGateName
 
 	// check that this gate ID does not exists
@@ -343,8 +347,6 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// update the in-memory state
-	srv.Lock()
-
 	g := &userGate{
 		name:       myGate.Name,
 		userEmails: make(map[string]bool),
@@ -358,8 +360,6 @@ func (srv *HomeGateServer) signUp(w http.ResponseWriter, r *http.Request) {
 
 	// keep it in the global gate map
 	srv.gates[myGate.Name] = g
-
-	srv.Unlock()
 
 	// return the response with a welcome message
 	registerResponse := RegisterResponse{
