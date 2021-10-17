@@ -15,6 +15,7 @@ import requests
 import websocket
 from dotenv import load_dotenv
 from learn import learn_utils
+from relay import relay_utils
 
 # use dot env for simply development and testing
 load_dotenv()
@@ -23,6 +24,7 @@ SIGNAL_DIR = os.getenv('SIGNAL_DIR')
 SERVER_HOMEGATE_URL = os.getenv('SERVER_HOMEGATE_URL')
 SIGNAL_PREFIX = os.getenv('SIGNAL_PREFIX')
 GATE_ID = os.getenv('GATE_ID')
+WIRED_MODE = os.getenv('WIRED_MODE')
 
 if SIGNAL_PREFIX == None or SIGNAL_PREFIX == "":
     SIGNAL_PREFIX = 'default'
@@ -64,13 +66,23 @@ def transmit_signal(signal):
 
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(TRANSMIT_PIN, GPIO.OUT)
-    logit("Transmitting gate signal, length: " + str(len(signal[0])))
-    for t in range(NUM_ATTEMPTS):
-        for i in range(len(signal[0])):
-            GPIO.output(TRANSMIT_PIN, signal[1][i])
-            time.sleep(signal[0][i])
+
+    if WIRED_MODE=='1':
+        # we use a relay, simply close it
+        logit("Using relay mode, closing relay for 1 sec...")
+        relay_utils.start_relay()
+        time.sleep(1)
+        logit("Using relay mode, open relay for 1 sec...")
+        relay_utils.stop_relay()
+    else:
+        logit("Transmitting gate signal, length: " + str(len(signal[0])))
+        for t in range(NUM_ATTEMPTS):
+            for i in range(len(signal[0])):
+                GPIO.output(TRANSMIT_PIN, signal[1][i])
+                time.sleep(signal[0][i])
+
     GPIO.cleanup()
-    logit("Transmission done")
+    logit("Transmitting gate command [OK]")
 
 
 def learn_open():

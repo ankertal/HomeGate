@@ -6,3 +6,5 @@ signals/21-07-2021-17-48-44-Tal-open.txt
 .env
 **/*.pyc
 server/cmd/homegate/frontend/node_modules/*
+server/cmd/homegate/all_pg_dbs.sql
+server/cmd/homegate/homegate
